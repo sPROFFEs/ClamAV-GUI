@@ -1,8 +1,37 @@
-# ClamAV-GUI
+<!-- App icon placeholder -->
+<img src="/assets_readme/icon.png" alt="ClamAV-GUI Icon" width="50" height="50" style="float:left; margin-right:10px;" />
+
+# ClamAV-GUI  
+<br clear="left" />
 
 ## Description
 
 ClamAV-GUI is a Windows desktop application written in C# that provides a graphical interface for the open-source ClamAV antivirus engine. It enables users to pick files or folders, run scans, and view comprehensive results without touching the command line.
+
+<p align="center">
+  <img src="/assets_readme/dashboard.png" alt="ClamAV-GUI Screenshot 1" width="600" /><br>
+</p>
+
+<p align="center">
+  <img src="/assets_readme/scan.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
+</p>
+
+<p align="center">
+  <img src="/assets_readme/settings.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
+</p>
+
+<p align="center">
+  <img src="/assets_readme/history.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
+</p>
+
+
+<p align="center">
+  <img src="/assets_readme/monitoring.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
+</p>
+
+<p align="center">
+  <img src="/assets_readme/daemon.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
+</p>
 
 ## Features
 
@@ -23,17 +52,14 @@ Alternatively, you can download the latest release from the [Releases](https://g
 
 ## Usage
 
-1. ensure ClamAV is installed and up to date on your system you can download it from https://www.clamav.net/downloads
-
-I recommend usign the portable version of ClamAV, which is available [here](https://www.clamav.net/downloads/production/clamav-1.4.3.win.x64.zip).
-
-2. After decompressing or installing ClamAV, launch ClamAV-GUI.
-3. Go to the settings panel and press on locate ClamAV installation path button.
-You would need to select the root directory of the ClamAV installation.
-4. Also on the settings panel press on initialize configuration button and later on download the latest database.
-4. select the target files or directories  
-5. click “Scan” to start the analysis  
-6. review the report for any detections  
+1. ensure ClamAV is installed and up to date on your system—you can download it from https://www.clamav.net/downloads  
+2. I recommend using the portable version of ClamAV, which is available [here](https://www.clamav.net/downloads/production/clamav-1.4.3.win.x64.zip).  
+3. After decompressing or installing ClamAV, launch ClamAV-GUI.  
+4. Go to the settings panel and click “Locate ClamAV installation path.” Select the root directory of your ClamAV installation.  
+5. On the settings panel, click “Initialize configuration” then “Download latest database.”  
+6. select the target files or directories  
+7. click “Scan” to start the analysis  
+8. review the report for any detections  
 
 ## Contributing
 
@@ -46,4 +72,3 @@ This project is licensed under the Creative Commons Attribution-NonCommercial 4.
 ## Credits
 
 this project relies on the ClamAV antivirus engine by Cisco Systems, licensed under the GNU General Public License v2. see https://www.clamav.net for more information.
-
