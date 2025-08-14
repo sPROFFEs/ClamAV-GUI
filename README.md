@@ -1,8 +1,13 @@
-<!-- App icon placeholder -->
-<img src="/assets_readme/icon.png" alt="ClamAV-GUI Icon" width="50" height="50" style="float:left; margin-right:10px;" />
-
-# ClamAV-GUI  
-<br clear="left" />
+<h1>
+  <img
+    src="/assets_readme/icon.png"
+    alt="ClamAV-GUI Icon"
+    width="50"
+    height="50"
+    style="vertical-align: middle; margin-right: 10px;"
+  />
+  ClamAV-GUI
+</h1>
 
 ## Description
 
@@ -48,7 +53,7 @@ ClamAV-GUI is a Windows desktop application written in C# that provides a graphi
 4. build and run the solution  
 5. Or compile the project and run the executable file
 
-Alternatively, you can download the latest release from the [Releases](https://github.com/sdksdk/ClamAV-GUI/releases) page.
+Alternatively, you can download the latest release from the [Releases](https://github.com/sPROFFEs/ClamAV-GUI/releases) page.
 
 ## Usage
 
