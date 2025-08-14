@@ -1,0 +1,7 @@
+C:\Users\sdksdk\Downloads\ClamAVGui.pdb
+C:\Users\sdksdk\Downloads\D3DCompiler_47_cor3.dll
+C:\Users\sdksdk\Downloads\PenImc_cor3.dll
+C:\Users\sdksdk\Downloads\PresentationNative_cor3.dll
+C:\Users\sdksdk\Downloads\vcruntime140_cor3.dll
+C:\Users\sdksdk\Downloads\wpfgfx_cor3.dll
+C:\Users\sdksdk\Downloads\ClamAVGui.exe

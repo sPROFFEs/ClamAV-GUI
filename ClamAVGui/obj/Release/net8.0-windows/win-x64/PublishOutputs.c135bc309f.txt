@@ -1,0 +1,11 @@
+C:\Users\sdksdk\Downloads\release\ClamAVGui.exe
+C:\Users\sdksdk\Downloads\release\ClamAVGui.deps.json
+C:\Users\sdksdk\Downloads\release\ClamAVGui.runtimeconfig.json
+C:\Users\sdksdk\Downloads\release\ClamAVGui.pdb
+C:\Users\sdksdk\Downloads\release\CliWrap.dll
+C:\Users\sdksdk\Downloads\release\Hardcodet.NotifyIcon.Wpf.dll
+C:\Users\sdksdk\Downloads\release\MaterialDesignColors.dll
+C:\Users\sdksdk\Downloads\release\MaterialDesignThemes.Wpf.dll
+C:\Users\sdksdk\Downloads\release\Microsoft.Xaml.Behaviors.dll
+C:\Users\sdksdk\Downloads\release\Ookii.Dialogs.Wpf.dll
+C:\Users\sdksdk\Downloads\release\ClamAVGui.dll

@@ -1,0 +1,11 @@
+C:\Users\sdksdk\Documents\ClamAV-GUI\ClamAVGui.exe
+C:\Users\sdksdk\Documents\ClamAV-GUI\ClamAVGui.deps.json
+C:\Users\sdksdk\Documents\ClamAV-GUI\ClamAVGui.runtimeconfig.json
+C:\Users\sdksdk\Documents\ClamAV-GUI\ClamAVGui.pdb
+C:\Users\sdksdk\Documents\ClamAV-GUI\CliWrap.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\Hardcodet.NotifyIcon.Wpf.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\MaterialDesignColors.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\MaterialDesignThemes.Wpf.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\Microsoft.Xaml.Behaviors.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\Ookii.Dialogs.Wpf.dll
+C:\Users\sdksdk\Documents\ClamAV-GUI\ClamAVGui.dll

@@ -1,0 +1,2 @@
+--- New Scan Session: 14/08/2025 12:54:56 ---
+C:\Users\sdksdk\Documents\DB.Browser.for.SQLite-v3.13.1-win64: OK

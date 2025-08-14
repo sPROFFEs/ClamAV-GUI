@@ -1,0 +1,520 @@
+<Window x:Class="ClamAVGui.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClamAVGui"
+        xmlns:converters="clr-namespace:ClamAVGui.Converters"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        xmlns:viewModels="clr-namespace:ClamAVGui.ViewModels"
+        xmlns:models="clr-namespace:ClamAVGui.Models"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
+        mc:Ignorable="d"
+        Title="ClamAV GUI" Height="700" Width="1000"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        Background="{DynamicResource MaterialDesignPaper}"
+        FontFamily="{materialDesign:MaterialDesignFont}"
+        StateChanged="Window_StateChanged">
+
+    <Window.DataContext>
+        <viewModels:MainViewModel/>
+    </Window.DataContext>
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter" />
+        <converters:InvertBoolToVisibilityConverter x:Key="InvertBoolToVisibilityConverter" />
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter" />
+        <converters:ZeroToNormalWeightConverter x:Key="ZeroToNormalWeightConverter" />
+        <converters:InfectedToBrushConverter x:Key="InfectedToBrushConverter" />
+    </Window.Resources>
+
+    <Grid>
+        <tb:TaskbarIcon x:Name="MyNotifyIcon"
+                        IconSource="/Assets/logo.ico"
+                        ToolTipText="ClamAV GUI"
+                        TrayMouseDoubleClick="MyNotifyIcon_TrayMouseDoubleClick">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Show" Click="ShowMenuItem_Click"/>
+                    <MenuItem Header="Exit" Click="ExitMenuItem_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
+        <TabControl Style="{StaticResource MaterialDesignTabControl}">
+            <TabItem Header="Dashboard">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Dashboard" Style="{StaticResource MaterialDesignHeadline5TextBlock}" HorizontalAlignment="Left" Margin="0,0,0,16"/>
+
+                        <!-- Status Cards -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <materialDesign:Card Grid.Column="0" Margin="0,0,8,0" Padding="16">
+                                <StackPanel>
+                                    <materialDesign:PackIcon Kind="Information" Height="32" Width="32" HorizontalAlignment="Center" />
+                                    <TextBlock Text="ClamAV Status" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,8,0,4" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ClamAVStatusText}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                            <materialDesign:Card Grid.Column="1" Margin="8,0,8,0" Padding="16">
+                                <StackPanel>
+                                    <materialDesign:PackIcon Kind="ShieldCheck" Height="32" Width="32" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Virus Definitions" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,8,0,4" HorizontalAlignment="center"/>
+                                    <TextBlock Text="{Binding VirusDefinitionsVersion, FallbackValue='N/A'}" HorizontalAlignment="Center"/>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                        <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" Width="16" Height="16"
+                                                     IsIndeterminate="True" Value="0" VerticalAlignment="Center" Margin="0,0,8,0"
+                                                     Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="Updating..." VerticalAlignment="Center" Opacity="0.7"
+                                                   Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="{Binding LastUpdateTime, StringFormat='Last Update: {0:g}', FallbackValue='(run update)'}"
+                                                   VerticalAlignment="Center" Opacity="0.7"
+                                                   Visibility="{Binding IsUpdating, Converter={StaticResource InvertBoolToVisibilityConverter}}"/>
+                                    </StackPanel>
+                                    <Button Content="Update Signatures" Command="{Binding UpdateSignaturesCommand}" Margin="0,16,0,0" IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}"/>
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                            <materialDesign:Card Grid.Column="2" Margin="8,0,0,0" Padding="16">
+                                <StackPanel>
+                                    <materialDesign:PackIcon Kind="Database" Height="32" Width="32" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Daemon Stats" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,8,0,4" HorizontalAlignment="Center"/>
+                                    <TextBlock Text="{Binding ClamAVDaemonStats}" TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                            <materialDesign:Card Grid.Column="3" Margin="8,0,0,0" Padding="16">
+                                <StackPanel>
+                                    <materialDesign:PackIcon Kind="History" Height="32" Width="32" HorizontalAlignment="Center" />
+                                    <TextBlock Text="Scan History" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,8,0,4" HorizontalAlignment="Center"/>
+                                    <TextBlock HorizontalAlignment="Center">
+                                        <Run Text="{Binding TotalScans, FallbackValue=0}"/>
+                                        <Run Text="Scans Performed"/>
+                                    </TextBlock>
+                                    <TextBlock HorizontalAlignment="Center" Opacity="0.7">
+                                        <Run Text="{Binding TotalInfectedFiles, FallbackValue=0}"/>
+                                        <Run Text="Infections Found"/>
+                                    </TextBlock>
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <TextBlock Grid.Row="2" Text="Update Output" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,24,0,8"
+                                   Visibility="{Binding UpdateOutputText, Converter={StaticResource NullToVisibilityConverter}}"/>
+                        <materialDesign:Card Grid.Row="2" Margin="0,8,0,0"
+                                             Visibility="{Binding UpdateOutputText, Converter={StaticResource NullToVisibilityConverter}}">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" MaxHeight="200">
+                                <TextBlock Text="{Binding UpdateOutputText}" TextWrapping="Wrap" Margin="16"/>
+                            </ScrollViewer>
+                        </materialDesign:Card>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Scan">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="300"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                    <!-- Left Column: Controls -->
+                    <StackPanel Grid.Column="0" Margin="0,0,16,0">
+                        <TextBlock Text="Scan Controls" Style="{StaticResource MaterialDesignHeadline6TextBlock}"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                            <Button Content="Scan Folder..." Command="{Binding ScanFolderCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource InvertBoolConverter}}" />
+                            <Button Content="Scan File..." Command="{Binding ScanFileCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource InvertBoolConverter}}" Margin="8,0,0,0"/>
+                        </StackPanel>
+
+                        <Expander Grid.Row="1" Header="Advanced Options" Margin="0,16,0,0" IsExpanded="True">
+                            <StackPanel Margin="8">
+                                <CheckBox IsChecked="{Binding Options.HeuristicAlerts}" Content="Enable Heuristic Alerts"/>
+                                <CheckBox IsChecked="{Binding Options.ScanEncrypted}" Content="Scan Encrypted Files" Margin="0,8,0,0"/>
+                                <CheckBox IsChecked="{Binding Options.LeaveTemps}" Content="Do not remove temporary files" Margin="0,8,0,0"/>
+                                <CheckBox IsChecked="{Binding Options.MoveToQuarantine}" Content="Move infected files to quarantine" Margin="0,8,0,0"/>
+                                <TextBox materialDesign:HintAssist.Hint="Quarantine Folder Path"
+                                         Text="{Binding Options.QuarantinePath, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                         Margin="24,4,0,0"
+                                         Visibility="{Binding Options.MoveToQuarantine, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
+
+                    <!-- Right Column: Results -->
+                    <Grid Grid.Column="1">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <TreeView ItemsSource="{Binding ScanResults}" x:Name="ScanResultsTreeView">
+                                <TreeView.ItemTemplate>
+                                    <HierarchicalDataTemplate DataType="{x:Type models:ScanResult}" ItemsSource="{Binding Children}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <materialDesign:PackIcon VerticalAlignment="Center" Margin="0,0,8,0">
+                                                <materialDesign:PackIcon.Style>
+                                                    <Style TargetType="materialDesign:PackIcon">
+                                                        <Setter Property="Kind" Value="FileDocument" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsFolder}" Value="True">
+                                                                <Setter Property="Kind" Value="Folder" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </materialDesign:PackIcon.Style>
+                                            </materialDesign:PackIcon>
+                                            <TextBlock Text="{Binding FilePath, ConverterParameter=60, Converter={x:Static converters:FilePathToShortPathConverter.Instance}}" VerticalAlignment="Center" FontWeight="{Binding IsFolder, Converter={StaticResource ZeroToNormalWeightConverter}}"/>
+                                            <TextBlock Text="{Binding Status, StringFormat=': {0}'}" VerticalAlignment="Center" Opacity="0.8" Margin="8,0,0,0"
+                                                       Foreground="{Binding Status, Converter={StaticResource InfectedToBrushConverter}}"/>
+                                        </StackPanel>
+                                    </HierarchicalDataTemplate>
+                                </TreeView.ItemTemplate>
+                            </TreeView>
+
+                            <!-- Scanning Overlay -->
+                            <materialDesign:Card UniformCornerRadius="6"
+                                                 Padding="16"
+                                                 VerticalAlignment="Center"
+                                                 HorizontalAlignment="Center"
+                                                 Visibility="{Binding IsScanning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                                                 IsIndeterminate="True"
+                                                 Value="0"
+                                                 VerticalAlignment="Center" />
+                                    <TextBlock Text="Scanning..."
+                                               Style="{StaticResource MaterialDesignHeadline6TextBlock}"
+                                               VerticalAlignment="Center"
+                                               Margin="16,0,0,0" />
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </Grid>
+
+                        <materialDesign:Card Grid.Row="1"
+                                             Visibility="{Binding CurrentScanSummary, Converter={StaticResource NullToVisibilityConverter}}">
+                            <StackPanel Margin="16" DataContext="{Binding CurrentScanSummary}">
+                                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Scan Summary" HorizontalAlignment="Center" Margin="0,0,0,16"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Scanned Dirs -->
+                                    <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="FolderSearchOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Run Text="{Binding ScannedDirectories}" FontWeight="Bold"/>
+                                            <Run Text="Dirs Scanned"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Scanned Files -->
+                                    <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="FileSearchOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Run Text="{Binding ScannedFiles}" FontWeight="Bold"/>
+                                            <Run Text="Files Scanned"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Time Taken -->
+                                    <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="TimerOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Run Text="{Binding TimeTaken}" FontWeight="Bold"/>
+                                            <Run Text="Time Taken"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Engine Version -->
+                                    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="EngineOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Run Text="{Binding EngineVersion}" FontWeight="Bold"/>
+                                            <Run Text="Engine"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Known Viruses -->
+                                    <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="VirusOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center">
+                                            <Run Text="{Binding KnownViruses}" FontWeight="Bold"/>
+                                            <Run Text="Signatures"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- Infected Files -->
+                                    <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8">
+                                        <materialDesign:PackIcon Kind="BugCheckOutline" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                        <TextBlock VerticalAlignment="Center"
+                                                   Foreground="{Binding InfectedFiles, Converter={StaticResource InfectedToBrushConverter}}">
+                                            <Run Text="{Binding InfectedFiles}" FontWeight="Bold"/>
+                                            <Run Text="Infected"/>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </materialDesign:Card>
+                    </Grid>
+                </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <!-- Unconfigured View -->
+                        <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center"
+                                    Visibility="{Binding IsClamAVConfigured, Converter={StaticResource InvertBoolToVisibilityConverter}}">
+                            <TextBlock Text="ClamAV Not Found" Style="{StaticResource MaterialDesignHeadline5TextBlock}" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Please select the root folder of your ClamAV installation." Margin="0,8,0,16" HorizontalAlignment="Center"/>
+                            <Button Content="Select ClamAV Folder..." Command="{Binding SelectPathCommand}" Style="{StaticResource MaterialDesignRaisedButton}" />
+                        </StackPanel>
+
+                        <!-- Configured View -->
+                        <StackPanel Visibility="{Binding IsClamAVConfigured, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <TextBlock Text="Configuration" Style="{StaticResource MaterialDesignHeadline6TextBlock}" />
+                            <TextBlock Text="{Binding ClamAVStatusText}" TextWrapping="Wrap" Margin="0,8,0,16" />
+
+                            <Button Content="Change Path..." Command="{Binding ChangePathCommand}" Margin="0,0,0,16" HorizontalAlignment="Left"/>
+
+                            <Separator Margin="0,8,0,8" />
+
+                            <TextBlock Text="Application Settings" Style="{StaticResource MaterialDesignHeadline6TextBlock}" />
+                            <CheckBox IsChecked="{Binding StartWithWindows}" Content="Start with Windows" Margin="0,8,0,0"/>
+
+                            <Separator Margin="0,16,0,16" />
+
+                            <TextBlock Text="Initialize" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,16,0,0"/>
+                            <StackPanel Visibility="{Binding IsConfigInitialized, Converter={StaticResource InvertBoolToVisibilityConverter}}">
+                                <TextBlock TextWrapping="Wrap" Margin="0,8,0,16">
+                                    If this is a fresh ClamAV extraction, you may need to initialize the configuration files.
+                                    This will copy the templates and remove the 'Example' line for you.
+                                </TextBlock>
+                                <Button Content="Initialize Configuration Files" Command="{Binding InitializeConfigCommand}" HorizontalAlignment="Left"/>
+                            </StackPanel>
+
+                            <StackPanel Margin="0,8,0,16" Visibility="{Binding IsConfigInitialized, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock TextWrapping="Wrap" Text="✔ Configuration files initialized." FontWeight="Bold" Foreground="Green"/>
+                            <TextBlock TextWrapping="Wrap" Margin="0,8,0,8">
+                                    Next, you must download the virus signature database. This may take a few minutes.
+                                </TextBlock>
+                            <Button Content="Download Virus Database" Command="{Binding UpdateSignaturesCommand}" Style="{StaticResource MaterialDesignRaisedButton}" HorizontalAlignment="Left"
+                                    IsEnabled="{Binding IsUpdating, Converter={StaticResource InvertBoolConverter}}"/>
+
+                            <StackPanel Margin="0,8,0,0"
+                                        Visibility="{Binding IsUpdating, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ProgressBar IsIndeterminate="True" Style="{StaticResource MaterialDesignLinearProgressBar}" />
+                                <TextBlock Text="{Binding UpdateStatusText}" Margin="0,4,0,0" FontStyle="Italic" Opacity="0.7"/>
+                            </StackPanel>
+
+                            <TextBlock Text="{Binding UpdateStatusText}" FontWeight="Bold" Margin="0,8,0,0"
+                                       Visibility="{Binding IsUpdating, Converter={StaticResource InvertBoolToVisibilityConverter}}"/>
+
+                            </StackPanel>
+
+                            <Separator Style="{StaticResource MaterialDesignDarkSeparator}" Margin="0,16,0,16" />
+
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="History">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal" Grid.Row="0">
+                            <Button Content="Refresh History" Command="{Binding LoadHistoryCommand}" HorizontalAlignment="Left" />
+                            <Button Content="Clear All History" Command="{Binding ClearHistoryCommand}" HorizontalAlignment="Left" Margin="16,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                        </StackPanel>
+                    <DataGrid Grid.Row="1" Margin="0,8,0,0" ItemsSource="{Binding HistoryEvents}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="Auto"/>
+                            <DataGridTextColumn Header="Event" Binding="{Binding EventType}" Width="Auto"/>
+                            <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="*"/>
+                            <DataGridTemplateColumn Header="Actions" Width="Auto">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource MaterialDesignToolButton}"
+                                                    Command="{Binding DataContext.ViewHistoryEventCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="View Details">
+                                                <materialDesign:PackIcon Kind="Eye" />
+                                            </Button>
+                                            <Button Style="{StaticResource MaterialDesignToolButton}"
+                                                    Command="{Binding DataContext.DeleteHistoryEventCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                    CommandParameter="{Binding}"
+                                                    ToolTip="Delete Entry"
+                                                    Margin="8,0,0,0">
+                                                <materialDesign:PackIcon Kind="Delete" />
+                                            </Button>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Monitoring">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16" IsEnabled="{Binding IsClamAVConfigured}">
+                        <StackPanel VerticalAlignment="Top">
+                            <TextBlock Text="On-Access Monitoring" Style="{StaticResource MaterialDesignHeadline5TextBlock}" />
+                            <TextBlock TextWrapping="Wrap" Margin="0,8,0,16" Opacity="0.7">
+                                This feature enables real-time protection by scanning files as soon as they are created or modified in a specific directory.
+                            </TextBlock>
+
+                            <materialDesign:Card Padding="16">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Status:" Style="{StaticResource MaterialDesignHeadline6TextBlock}" VerticalAlignment="Center" />
+                                        <TextBlock Text="ACTIVE" Foreground="Green" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                   Visibility="{Binding IsMonitoringActive, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                        <TextBlock Text="INACTIVE" Foreground="Red" FontWeight="Bold" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                   Visibility="{Binding IsMonitoringActive, Converter={StaticResource InvertBoolToVisibilityConverter}}"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="Monitored Paths:" Margin="0,16,0,4" />
+                                    <ListView ItemsSource="{Binding MonitoredPaths}" MaxHeight="150" Margin="0,0,0,8" x:Name="MonitoredPathsListView"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                        <Button Content="Add Folder..." Command="{Binding AddMonitoredPathCommand}" />
+                                        <Button Content="Remove Selected" Command="{Binding RemoveMonitoredPathCommand}" CommandParameter="{Binding ElementName=MonitoredPathsListView, Path=SelectedItem}" Margin="8,0,0,0"/>
+                                    </StackPanel>
+
+                                    <Separator Style="{StaticResource MaterialDesignDarkSeparator}" Margin="0,8,0,16"/>
+
+                                    <TextBlock Text="Monitoring Options" Style="{StaticResource MaterialDesignHeadline6TextBlock}" VerticalAlignment="Center" />
+
+                                    <TextBlock Text="File Type Filters:" Margin="0,16,0,4" />
+                                    <Border BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" CornerRadius="4" Padding="8" MinHeight="40">
+                                        <ItemsControl ItemsSource="{Binding FileTypeFilters}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel IsItemsHost="True"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <materialDesign:Chip Content="{Binding}"
+                                                                         IsDeletable="True"
+                                                                         DeleteCommand="{Binding DataContext.RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                         DeleteCommandParameter="{Binding}"
+                                                                         Margin="0,0,4,4"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Border>
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
+                                        <TextBox Text="{Binding NewFilterText, UpdateSourceTrigger=PropertyChanged}"
+                                                 materialDesign:HintAssist.Hint="e.g., .exe or .txt"
+                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                 MinWidth="200"/>
+                                        <Button Content="Add Filter"
+                                                Command="{Binding AddFilterCommand}"
+                                                Margin="8,0,0,0"
+                                                VerticalAlignment="Center"/>
+                                    </StackPanel>
+
+                                    <TextBlock Text="Exclusions:" Margin="0,16,0,4" />
+                                    <ListView ItemsSource="{Binding ExcludedPaths}" MaxHeight="150" Margin="0,0,0,8" x:Name="ExcludedPathsListView"/>
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Add File..." Command="{Binding AddExcludedPathCommand}" CommandParameter="File" />
+                                        <Button Content="Add Folder..." Command="{Binding AddExcludedPathCommand}" CommandParameter="Folder" Margin="8,0,0,0"/>
+                                        <Button Content="Remove Selected" Command="{Binding RemoveExcludedPathCommand}" CommandParameter="{Binding ElementName=ExcludedPathsListView, Path=SelectedItem}" Margin="8,0,0,0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </materialDesign:Card>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                                <Button Content="Start Monitoring" Command="{Binding StartMonitoringCommand}" Style="{StaticResource MaterialDesignRaisedButton}" IsEnabled="{Binding IsMonitoringActive, Converter={StaticResource InvertBoolConverter}}"/>
+                                <Button Content="Stop Monitoring" Command="{Binding StopMonitoringCommand}" Margin="16,0,0,0" IsEnabled="{Binding IsMonitoringActive}"/>
+                                <Button Content="Export Log" Command="{Binding ExportLogCommand}" Margin="16,0,0,0" />
+                            </StackPanel>
+
+                            <TextBlock Text="Live Log" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,24,0,8"/>
+                            <Border BorderBrush="{DynamicResource MaterialDesignDivider}" BorderThickness="1" CornerRadius="4">
+                                <ListView x:Name="MonitoringLogListView" ItemsSource="{Binding MonitoringLogEntries}" Height="200" />
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Daemon">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <StackPanel>
+                            <TextBlock Text="Daemon Control" Style="{StaticResource MaterialDesignHeadline5TextBlock}" />
+                            <TextBlock TextWrapping="Wrap" Margin="0,8,0,16" Opacity="0.7">
+                                Use these commands to interact with the ClamAV daemon directly.
+                            </TextBlock>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,16">
+                                <TextBlock Text="Status:" VerticalAlignment="Center" FontWeight="Bold"/>
+                                <TextBlock Text="Running" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="Green"
+                                           Visibility="{Binding IsClamDRunning, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                                <TextBlock Text="Stopped" VerticalAlignment="Center" Margin="8,0,0,0" Foreground="Red"
+                                           Visibility="{Binding IsClamDRunning, Converter={StaticResource InvertBoolToVisibilityConverter}}"/>
+                                <Button Content="Refresh" Command="{Binding CheckDaemonStatusCommand}" Style="{StaticResource MaterialDesignToolButton}" Margin="16,0,0,0"/>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Start Daemon" Command="{Binding StartClamdCommand}" IsEnabled="{Binding IsClamDRunning, Converter={StaticResource InvertBoolConverter}}"/>
+                                <Button Content="Stop Daemon" Command="{Binding StopClamdCommand}" IsEnabled="{Binding IsClamDRunning}" Margin="16,0,0,0"/>
+                            </StackPanel>
+
+                            <Separator Style="{StaticResource MaterialDesignDarkSeparator}" Margin="0,16,0,16" />
+
+                            <materialDesign:Card Padding="16">
+                                <StackPanel>
+                                    <Button Content="Ping Daemon" Command="{Binding PingDaemonCommand}" IsEnabled="{Binding IsClamDRunning}" />
+                                    <TextBlock Text="Sends a PING command to the daemon. Should respond with PONG." Opacity="0.7" Margin="0,4,0,16" />
+
+                                    <Button Content="Reload Database" Command="{Binding ReloadDatabaseCommand}" IsEnabled="{Binding IsClamDRunning}" />
+                                    <TextBlock Text="Forces the daemon to reload the virus database." Opacity="0.7" Margin="0,4,0,16" />
+
+                                    <Button Content="Show Supported Commands" Command="{Binding GetVersionCommandsCommand}" IsEnabled="{Binding IsClamDRunning}" />
+                                    <TextBlock Text="Asks the daemon to list all supported commands." Opacity="0.7" Margin="0,4,0,16" />
+
+                                    <Button Content="Shutdown Daemon" Command="{Binding ShutdownDaemonCommand}" IsEnabled="{Binding IsClamDRunning}" Style="{StaticResource MaterialDesignRaisedButton}" Background="Red" />
+                                    <TextBlock Text="Instructs the daemon to perform a clean shutdown." Opacity="0.7" Margin="0,4,0,0" />
+                                </StackPanel>
+                            </materialDesign:Card>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

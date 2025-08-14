@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "dgSpecHash": "aPbNMWnvuOM=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\sdksdk\\Documents\\GitHub\\ClamAVGui\\ClamAVGui\\ClamAVGui.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\sdksdk\\.nuget\\packages\\cliwrap\\3.6.6\\cliwrap.3.6.6.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\hardcodet.notifyicon.wpf\\1.1.0\\hardcodet.notifyicon.wpf.1.1.0.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\materialdesigncolors\\3.1.0\\materialdesigncolors.3.1.0.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\materialdesignthemes\\5.1.0\\materialdesignthemes.5.1.0.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\microsoft.xaml.behaviors.wpf\\1.1.39\\microsoft.xaml.behaviors.wpf.1.1.39.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\ookii.dialogs.wpf\\5.0.1\\ookii.dialogs.wpf.5.0.1.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\microsoft.netcore.app.crossgen2.win-x64\\8.0.19\\microsoft.netcore.app.crossgen2.win-x64.8.0.19.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\8.0.19\\microsoft.aspnetcore.app.runtime.win-x64.8.0.19.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\8.0.19\\microsoft.windowsdesktop.app.runtime.win-x64.8.0.19.nupkg.sha512",
+    "C:\\Users\\sdksdk\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\8.0.19\\microsoft.netcore.app.runtime.win-x64.8.0.19.nupkg.sha512"
+  ],
+  "logs": []
+}
