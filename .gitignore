@@ -1,0 +1,41 @@
+# Build Folders
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.dbmdl
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# NuGet Packages
+*.nupkg
+packages/
+.nuget/
+
+# Publish Output
+*.Publish.xml
+*.azurePubxml
+*.pubxml.user
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# VS Code
+.vscode/
