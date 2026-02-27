@@ -2,7 +2,9 @@ using ClamAVGui.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace ClamAVGui.Services
@@ -76,6 +78,35 @@ namespace ClamAVGui.Services
                 File.Delete(_logFilePath);
             }
             return Task.CompletedTask;
+        }
+
+        public async Task ExportAsJsonAsync(string outputPath)
+        {
+            var events = await LoadHistoryAsync();
+            var json = JsonSerializer.Serialize(events, new JsonSerializerOptions { WriteIndented = true });
+            await File.WriteAllTextAsync(outputPath, json);
+        }
+
+        public async Task ExportAsCsvAsync(string outputPath)
+        {
+            var events = await LoadHistoryAsync();
+            var sb = new StringBuilder();
+            sb.AppendLine("Id,Timestamp,EventType,Details");
+
+            foreach (var item in events)
+            {
+                sb.Append('"').Append(item.Id).Append("\",");
+                sb.Append('"').Append(item.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")).Append("\",");
+                sb.Append('"').Append(EscapeCsv(item.EventType)).Append("\",");
+                sb.Append('"').Append(EscapeCsv(item.Details)).Append('"').AppendLine();
+            }
+
+            await File.WriteAllTextAsync(outputPath, sb.ToString());
+        }
+
+        private static string EscapeCsv(string value)
+        {
+            return value.Replace("\"", "\"\"");
         }
     }
 }

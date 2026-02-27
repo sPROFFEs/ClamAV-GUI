@@ -1,12 +1,20 @@
 using ClamAVGui.Models;
 using ClamAVGui.Services;
 using Ookii.Dialogs.Wpf;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
 using System.Windows.Input;
 using Microsoft.Win32;
 using System.IO;
@@ -18,7 +26,12 @@ namespace ClamAVGui.ViewModels
         private const string AppName = "ClamAV GUI";
         private readonly SettingsService _settingsService;
         private readonly HistoryService _historyService;
+        private readonly QuarantineService _quarantineService;
+        private readonly SchedulerService _schedulerService;
         private string? _clamAVPath;
+        private CancellationTokenSource? _scanCts;
+        private readonly ConcurrentDictionary<string, CancellationTokenSource> _pendingMonitoringDebounce = new(StringComparer.OrdinalIgnoreCase);
+        private readonly ConcurrentDictionary<string, byte> _activeMonitoringScans = new(StringComparer.OrdinalIgnoreCase);
 
         // Status Properties
         private string _clamAVStatusText = "Initializing...";
@@ -75,6 +88,34 @@ namespace ClamAVGui.ViewModels
         // Other UI Properties
         public ObservableCollection<ScanResult> ScanResults { get; } = new ObservableCollection<ScanResult>();
         public ObservableCollection<HistoryEvent> HistoryEvents { get; } = new ObservableCollection<HistoryEvent>();
+        public ICollectionView HistoryView { get; }
+        private string _historyFilterText = string.Empty;
+        public string HistoryFilterText
+        {
+            get => _historyFilterText;
+            set
+            {
+                if (_historyFilterText == value) return;
+                _historyFilterText = value;
+                OnPropertyChanged();
+                HistoryView.Refresh();
+            }
+        }
+
+        private string _historyFilterType = "All";
+        public string HistoryFilterType
+        {
+            get => _historyFilterType;
+            set
+            {
+                if (_historyFilterType == value) return;
+                _historyFilterType = value;
+                OnPropertyChanged();
+                HistoryView.Refresh();
+            }
+        }
+
+        public ObservableCollection<string> HistoryFilterTypes { get; } = new ObservableCollection<string> { "All", "Scan", "Update", "Update Failed", "Config Initialized" };
         private string _updateOutputText = "";
         public string UpdateOutputText { get => _updateOutputText; set { _updateOutputText = value; OnPropertyChanged(); } }
         private string _updateStatusText = "";
@@ -91,7 +132,7 @@ namespace ClamAVGui.ViewModels
         public ObservableCollection<string> MonitoringLogEntries { get; } = new ObservableCollection<string>();
         private readonly List<FileSystemWatcher> _monitoringWatchers = new List<FileSystemWatcher>();
         public ObservableCollection<string> FileTypeFilters { get; } = new ObservableCollection<string>();
-        private string _newFilterText;
+        private string _newFilterText = string.Empty;
         public string NewFilterText { get => _newFilterText; set { _newFilterText = value; OnPropertyChanged(); } }
         public ObservableCollection<string> ExcludedPaths { get; } = new ObservableCollection<string>();
 
@@ -128,13 +169,37 @@ namespace ClamAVGui.ViewModels
         public ICommand ShutdownDaemonCommand { get; }
         public ICommand GetStatsCommand { get; }
         public ICommand GetVersionCommandsCommand { get; }
+        public ICommand CancelScanCommand { get; }
+        public ICommand ExportHistoryCommand { get; }
+        public ICommand RunHealthCheckCommand { get; }
+        public ICommand LoadQuarantineCommand { get; }
+        public ICommand RemoveQuarantineItemCommand { get; }
+        public ICommand RestoreQuarantineItemCommand { get; }
+        public ICommand ScanWithDaemonFolderCommand { get; }
+        public ICommand ScheduleDailyScanCommand { get; }
+        public ICommand RemoveScheduleCommand { get; }
+        public ICommand BrowseScheduledPathCommand { get; }
+
+        public ObservableCollection<QuarantineItem> QuarantineItems { get; } = new ObservableCollection<QuarantineItem>();
+        private string _scheduledScanPath = string.Empty;
+        public string ScheduledScanPath { get => _scheduledScanPath; set { _scheduledScanPath = value; OnPropertyChanged(); } }
+
+        private string _scheduledScanTime = "02:00";
+        public string ScheduledScanTime { get => _scheduledScanTime; set { _scheduledScanTime = value; OnPropertyChanged(); } }
+
+        private bool _isScheduledScanEnabled;
+        public bool IsScheduledScanEnabled { get => _isScheduledScanEnabled; set { _isScheduledScanEnabled = value; OnPropertyChanged(); } }
 
 
         public MainViewModel()
         {
             _settingsService = new SettingsService();
             _historyService = new HistoryService();
+            _quarantineService = new QuarantineService();
+            _schedulerService = new SchedulerService();
             Options = new ScanOptions();
+            HistoryView = CollectionViewSource.GetDefaultView(HistoryEvents);
+            HistoryView.Filter = FilterHistory;
 
             SelectPathCommand = new AsyncRelayCommand(SelectAndSavePath);
             ChangePathCommand = new AsyncRelayCommand(SelectAndSavePath);
@@ -164,6 +229,16 @@ namespace ClamAVGui.ViewModels
             ShutdownDaemonCommand = new AsyncRelayCommand(ShutdownDaemon, () => IsClamAVConfigured && IsClamDRunning);
             GetStatsCommand = new AsyncRelayCommand(GetStats, () => IsClamAVConfigured && IsClamDRunning);
             GetVersionCommandsCommand = new AsyncRelayCommand(GetVersionCommands, () => IsClamAVConfigured && IsClamDRunning);
+            CancelScanCommand = new RelayCommand(CancelScan, () => IsScanning);
+            ExportHistoryCommand = new AsyncRelayCommand(ExportHistory, () => HistoryEvents.Any());
+            RunHealthCheckCommand = new AsyncRelayCommand(RunHealthCheck, () => IsClamAVConfigured);
+            LoadQuarantineCommand = new AsyncRelayCommand(LoadQuarantine);
+            RemoveQuarantineItemCommand = new AsyncRelayCommand<QuarantineItem>(RemoveQuarantineItem);
+            RestoreQuarantineItemCommand = new AsyncRelayCommand<QuarantineItem>(RestoreQuarantineItem);
+            ScanWithDaemonFolderCommand = new AsyncRelayCommand(ScanFolderUsingDaemon, () => IsClamAVConfigured && IsClamDRunning);
+            ScheduleDailyScanCommand = new AsyncRelayCommand(ScheduleDailyScan, () => IsClamAVConfigured);
+            RemoveScheduleCommand = new AsyncRelayCommand(RemoveScheduledScan, () => IsClamAVConfigured);
+            BrowseScheduledPathCommand = new RelayCommand(BrowseScheduledPath, () => IsClamAVConfigured);
 
 
             _ = LoadInitialPathAsync();
@@ -179,6 +254,8 @@ namespace ClamAVGui.ViewModels
             var path = await _settingsService.LoadPathAsync();
             await ValidateAndSetPath(path, true);
             await LoadHistory();
+            await LoadQuarantine();
+            IsScheduledScanEnabled = await _schedulerService.IsScheduledScanConfiguredAsync();
             var monitoredPaths = await _settingsService.LoadMonitoredPathsAsync();
             foreach (var p in monitoredPaths)
             {
@@ -262,7 +339,8 @@ namespace ClamAVGui.ViewModels
 
         private async Task RefreshDaemonStatusAsync()
         {
-            IsClamDRunning = ClamAVService.IsClamdRunning();
+            var pingResult = await ClamAVService.PingDaemonAsync();
+            IsClamDRunning = pingResult.Contains("PONG", StringComparison.OrdinalIgnoreCase);
             await UpdateDaemonInfoAsync();
             await UpdateDashboardAsync();
         }
@@ -419,9 +497,12 @@ namespace ClamAVGui.ViewModels
 
         private async Task ScanPath(string? pathToScan)
         {
-             if (string.IsNullOrEmpty(pathToScan) || _clamAVPath == null) return;
+            if (string.IsNullOrEmpty(pathToScan) || _clamAVPath == null) return;
 
             IsScanning = true;
+            _scanCts?.Cancel();
+            _scanCts?.Dispose();
+            _scanCts = new CancellationTokenSource();
             ScanResults.Clear();
             CurrentScanSummary = null;
             await _historyService.LogEventAsync("Scan", $"Scan started for: {pathToScan}");
@@ -429,6 +510,14 @@ namespace ClamAVGui.ViewModels
             var summary = new ScanSummary();
             var inSummarySection = false;
             var scannedFilesCount = 0;
+            var detectedThreats = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> quarantineBefore = new(StringComparer.OrdinalIgnoreCase);
+
+            if (Options.MoveToQuarantine && !string.IsNullOrWhiteSpace(Options.QuarantinePath) && Directory.Exists(Options.QuarantinePath))
+            {
+                quarantineBefore = Directory.EnumerateFiles(Options.QuarantinePath, "*", SearchOption.AllDirectories)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
 
             // This is the root node for the entire scan operation.
             ScanResult? scanRootNode = null;
@@ -449,11 +538,14 @@ namespace ClamAVGui.ViewModels
             {
                 Action<string> processLineAction = line =>
                 {
-                    if (string.IsNullOrWhiteSpace(line) || line.Contains("SCAN SUMMARY"))
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        // For clamd scans, summary data is not as reliable or may be parsed incorrectly.
-                        // For clamscan, this check is for the summary block separator.
-                        if (line.Contains("----------- SCAN SUMMARY -----------")) inSummarySection = true;
+                        return;
+                    }
+
+                    if (line.Contains("----------- SCAN SUMMARY -----------", StringComparison.OrdinalIgnoreCase))
+                    {
+                        inSummarySection = true;
                         return;
                     }
 
@@ -476,48 +568,47 @@ namespace ClamAVGui.ViewModels
                     }
                     else
                     {
-                        Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            string filePath;
-                            string status;
-
-                            var lastColonIndex = line.LastIndexOf(':');
-
-                            // This new logic handles both "file: status" and just "file" (implying OK)
-                            if (lastColonIndex > 1 && lastColonIndex < line.Length - 1)
+                            Application.Current.Dispatcher.Invoke(() =>
                             {
-                                filePath = line.Substring(0, lastColonIndex).Trim();
-                                status = line.Substring(lastColonIndex + 1).Trim();
-                            }
-                            else
-                            {
-                                filePath = line.Trim();
-                                status = "OK";
-                            }
+                                var parsed = TryParseScanResultLine(line);
+                                if (parsed == null)
+                                {
+                                    return;
+                                }
 
-                            if (status.EndsWith("FOUND"))
-                            {
-                                infectedFiles++;
-                            }
+                                var (filePath, status) = parsed.Value;
 
-                            var fileResult = new ScanResult { FilePath = filePath, Status = status, IsFolder = false };
+                                if (status.EndsWith("FOUND", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    infectedFiles++;
+                                    var threatName = status[..^"FOUND".Length].Trim();
+                                    detectedThreats[filePath] = string.IsNullOrWhiteSpace(threatName) ? "Unknown" : threatName;
+                                }
 
-                            if (scanRootNode != null)
-                            {
-                                scanRootNode.Children.Add(fileResult);
-                            }
-                            else
-                            {
-                                ScanResults.Add(fileResult);
-                            }
-                            scannedFilesCount++;
-                        });
+                                var fileResult = new ScanResult { FilePath = filePath, Status = status, IsFolder = false };
+
+                                if (scanRootNode != null)
+                                {
+                                    scanRootNode.Children.Add(fileResult);
+                                }
+                                else
+                                {
+                                    ScanResults.Add(fileResult);
+                                }
+
+                                if (status.EndsWith("OK", StringComparison.OrdinalIgnoreCase) ||
+                                    status.EndsWith("FOUND", StringComparison.OrdinalIgnoreCase) ||
+                                    status.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    scannedFilesCount++;
+                                }
+                            });
                     }
                 };
 
                 // Per user request, all manual scans will now use clamscan for reliability.
                 // The daemon will only be used for On-Access (real-time) monitoring.
-                await ClamAVService.RunClamscanAsync(_clamAVPath, pathToScan, Options, processLineAction);
+                await ClamAVService.RunClamscanAsync(_clamAVPath, pathToScan, Options, processLineAction, _scanCts.Token);
 
                 // Update the status of the root folder node after the scan is complete
                 if (scanRootNode != null)
@@ -533,11 +624,39 @@ namespace ClamAVGui.ViewModels
                 }
 
                 CurrentScanSummary = summary;
+
+                if (Options.MoveToQuarantine && !string.IsNullOrWhiteSpace(Options.QuarantinePath) && Directory.Exists(Options.QuarantinePath))
+                {
+                    var afterFiles = Directory.EnumerateFiles(Options.QuarantinePath, "*", SearchOption.AllDirectories)
+                        .ToHashSet(StringComparer.OrdinalIgnoreCase);
+                    var newQuarantineFiles = afterFiles.Except(quarantineBefore).ToList();
+
+                    if (newQuarantineFiles.Any())
+                    {
+                        var newItems = newQuarantineFiles.Select(path => new QuarantineItem
+                        {
+                            QuarantinePath = path,
+                            OriginalPath = detectedThreats.Keys.FirstOrDefault(k => string.Equals(Path.GetFileName(k), Path.GetFileName(path), StringComparison.OrdinalIgnoreCase)) ?? "Unknown",
+                            ThreatName = detectedThreats.Values.FirstOrDefault() ?? "Detected by clamscan",
+                            QuarantinedAt = DateTime.Now,
+                            Notes = "Moved automatically by clamscan --move"
+                        }).ToList();
+
+                        await _quarantineService.AddItemsAsync(newItems);
+                        await LoadQuarantine();
+                    }
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                await _historyService.LogEventAsync("Scan", $"Scan cancelled for: {pathToScan}");
             }
             finally
             {
                 await _historyService.LogEventAsync("Scan", $"Scan finished for: {pathToScan}. Infected files: {infectedFiles}.");
                 IsScanning = false;
+                _scanCts?.Dispose();
+                _scanCts = null;
                 await UpdateDashboardAsync();
             }
         }
@@ -637,7 +756,7 @@ namespace ClamAVGui.ViewModels
             }
         }
 
-        private void RemoveMonitoredPath(string path)
+        private void RemoveMonitoredPath(string? path)
         {
             if (path != null)
             {
@@ -645,7 +764,7 @@ namespace ClamAVGui.ViewModels
             }
         }
 
-        private void AddExcludedPath(string type)
+        private void AddExcludedPath(string? type)
         {
             if (type == "File")
             {
@@ -671,7 +790,7 @@ namespace ClamAVGui.ViewModels
             }
         }
 
-        private void RemoveExcludedPath(string path)
+        private void RemoveExcludedPath(string? path)
         {
             if (path != null)
             {
@@ -681,7 +800,7 @@ namespace ClamAVGui.ViewModels
 
         private void AddFilter()
         {
-            var newFilter = NewFilterText.Trim();
+            var newFilter = NormalizeFilter(NewFilterText);
             if (!string.IsNullOrWhiteSpace(newFilter) && !FileTypeFilters.Contains(newFilter))
             {
                 FileTypeFilters.Add(newFilter);
@@ -689,7 +808,7 @@ namespace ClamAVGui.ViewModels
             NewFilterText = string.Empty;
         }
 
-        private void RemoveFilter(string filter)
+        private void RemoveFilter(string? filter)
         {
             if (filter != null)
             {
@@ -711,16 +830,23 @@ namespace ClamAVGui.ViewModels
 
             foreach (var path in MonitoredPaths)
             {
+                if (!Directory.Exists(path))
+                {
+                    MonitoringLogEntries.Add($"Skipped (not found): {path}");
+                    continue;
+                }
+
                 var watcher = new FileSystemWatcher(path)
                 {
                     IncludeSubdirectories = true,
-                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
                 };
 
                 watcher.Created += OnFileCreatedOrChanged;
                 watcher.Changed += OnFileCreatedOrChanged;
                 watcher.Deleted += OnFileDeleted;
                 watcher.Renamed += OnFileRenamed;
+                watcher.Error += OnWatcherError;
                 watcher.EnableRaisingEvents = true;
                 _monitoringWatchers.Add(watcher);
                 MonitoringLogEntries.Add($"Monitoring started for: {path}");
@@ -731,50 +857,23 @@ namespace ClamAVGui.ViewModels
 
         private bool IsWildcardMatch(string input, string pattern)
         {
-            // Simple wildcard matching for patterns like *.exe or file.txt
-            pattern = pattern.ToLower();
-            input = input.ToLower();
-
-            if (pattern.StartsWith("*."))
+            if (string.IsNullOrWhiteSpace(pattern))
             {
-                return input.EndsWith(pattern.Substring(1));
+                return false;
             }
 
-            return input == pattern;
+            var normalizedPattern = NormalizeFilter(pattern);
+            var regexPattern = "^" + Regex.Escape(normalizedPattern)
+                .Replace("\\*", ".*")
+                .Replace("\\?", ".") + "$";
+
+            return Regex.IsMatch(input, regexPattern, RegexOptions.IgnoreCase);
         }
 
         private void OnFileCreatedOrChanged(object sender, FileSystemEventArgs e)
         {
             if (!File.Exists(e.FullPath)) return;
-
-            // Exclusion Check
-            if (ExcludedPaths.Any(p => e.FullPath.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
-            {
-                return;
-            }
-
-            // Filter Check
-            if (FileTypeFilters.Any())
-            {
-                var fileName = Path.GetFileName(e.FullPath);
-                if (!FileTypeFilters.Any(p => IsWildcardMatch(fileName, p)))
-                {
-                    return;
-                }
-            }
-
-            Task.Run(async () =>
-            {
-                var result = await ClamAVService.ScanFileWithDaemonAsync(e.FullPath);
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    MonitoringLogEntries.Add(result);
-                    if (result.Contains("FOUND"))
-                    {
-                        MessageBox.Show(result, "Malicious File Detected!", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    }
-                });
-            });
+            ScheduleDebouncedMonitoringScan(e.FullPath);
         }
 
         private void OnFileDeleted(object sender, FileSystemEventArgs e)
@@ -792,25 +891,196 @@ namespace ClamAVGui.ViewModels
                 MonitoringLogEntries.Add($"RENAMED: {e.OldFullPath} -> {e.FullPath}");
             });
 
-            Task.Run(async () =>
+            if (File.Exists(e.FullPath))
             {
-                var result = await ClamAVService.ScanFileWithDaemonAsync(e.FullPath);
+                ScheduleDebouncedMonitoringScan(e.FullPath);
+            }
+        }
+
+        private void OnWatcherError(object sender, ErrorEventArgs e)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                MonitoringLogEntries.Add($"WATCHER ERROR: {e.GetException().Message}");
+            });
+        }
+
+        private void ScheduleDebouncedMonitoringScan(string fullPath)
+        {
+            if (!ShouldScanPath(fullPath))
+            {
+                return;
+            }
+
+            var key = NormalizePathSafe(fullPath);
+            var cts = new CancellationTokenSource();
+
+            if (_pendingMonitoringDebounce.TryGetValue(key, out var previous))
+            {
+                previous.Cancel();
+                previous.Dispose();
+            }
+
+            _pendingMonitoringDebounce[key] = cts;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await Task.Delay(700, cts.Token);
+                    await ScanFileForMonitoringAsync(fullPath, cts.Token);
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                finally
+                {
+                    _pendingMonitoringDebounce.TryRemove(key, out _);
+                    cts.Dispose();
+                }
+            });
+        }
+
+        private async Task ScanFileForMonitoringAsync(string fullPath, CancellationToken cancellationToken)
+        {
+            var normalized = NormalizePathSafe(fullPath);
+            if (!_activeMonitoringScans.TryAdd(normalized, 0))
+            {
+                return;
+            }
+
+            try
+            {
+                if (!await WaitForFileReadyAsync(fullPath, cancellationToken))
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        MonitoringLogEntries.Add($"SKIPPED (locked): {fullPath}");
+                    });
+                    return;
+                }
+
+                var result = await ClamAVService.ScanFileWithDaemonAsync(fullPath);
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     MonitoringLogEntries.Add(result);
-                    if (result.Contains("FOUND"))
-                    {
-                        MessageBox.Show(result, "Malicious File Detected!", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    }
                 });
-            });
+            }
+            finally
+            {
+                _activeMonitoringScans.TryRemove(normalized, out _);
+            }
+        }
+
+        private static async Task<bool> WaitForFileReadyAsync(string path, CancellationToken cancellationToken)
+        {
+            for (var i = 0; i < 5; i++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                try
+                {
+                    using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                    return true;
+                }
+                catch (IOException)
+                {
+                    await Task.Delay(200, cancellationToken);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    return false;
+                }
+            }
+
+            return false;
+        }
+
+        private bool ShouldScanPath(string fullPath)
+        {
+            if (!File.Exists(fullPath))
+            {
+                return false;
+            }
+
+            if (IsExcludedPath(fullPath))
+            {
+                return false;
+            }
+
+            if (!FileTypeFilters.Any())
+            {
+                return true;
+            }
+
+            var fileName = Path.GetFileName(fullPath);
+            return FileTypeFilters.Any(filter => IsWildcardMatch(fileName, filter));
+        }
+
+        private bool IsExcludedPath(string fullPath)
+        {
+            var normalizedTarget = NormalizePathSafe(fullPath);
+
+            foreach (var excluded in ExcludedPaths)
+            {
+                var normalizedExcluded = NormalizePathSafe(excluded);
+                if (string.IsNullOrWhiteSpace(normalizedExcluded))
+                {
+                    continue;
+                }
+
+                if (string.Equals(normalizedTarget, normalizedExcluded, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+
+                if (Directory.Exists(excluded))
+                {
+                    var folderPrefix = normalizedExcluded.EndsWith(Path.DirectorySeparatorChar)
+                        ? normalizedExcluded
+                        : normalizedExcluded + Path.DirectorySeparatorChar;
+
+                    if (normalizedTarget.StartsWith(folderPrefix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static string NormalizePathSafe(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            try
+            {
+                return Path.GetFullPath(path.Trim())
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            }
+            catch
+            {
+                return path.Trim();
+            }
         }
 
         private void StopMonitoring()
         {
+            foreach (var pending in _pendingMonitoringDebounce.Values)
+            {
+                pending.Cancel();
+                pending.Dispose();
+            }
+            _pendingMonitoringDebounce.Clear();
+
             foreach (var watcher in _monitoringWatchers)
             {
                 watcher.EnableRaisingEvents = false;
+                watcher.Error -= OnWatcherError;
                 watcher.Dispose();
             }
             _monitoringWatchers.Clear();
@@ -897,6 +1167,250 @@ namespace ClamAVGui.ViewModels
             {
                 return false;
             }
+        }
+
+        private static string NormalizeFilter(string filter)
+        {
+            var normalized = filter?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(normalized))
+            {
+                return string.Empty;
+            }
+
+            if (normalized.StartsWith('.'))
+            {
+                return $"*{normalized}";
+            }
+
+            return normalized;
+        }
+
+        private static (string FilePath, string Status)? TryParseScanResultLine(string line)
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed))
+            {
+                return null;
+            }
+
+            var match = Regex.Match(trimmed, @"^(?<path>[A-Za-z]:\\.*?):\s*(?<status>.+)$");
+            if (match.Success)
+            {
+                return (match.Groups["path"].Value.Trim(), match.Groups["status"].Value.Trim());
+            }
+
+            var idx = trimmed.LastIndexOf(':');
+            if (idx > 0 && idx < trimmed.Length - 1)
+            {
+                return (trimmed[..idx].Trim(), trimmed[(idx + 1)..].Trim());
+            }
+
+            if (trimmed.StartsWith("WARNING", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase))
+            {
+                return ("Scanner", trimmed);
+            }
+
+            return null;
+        }
+
+        private void CancelScan()
+        {
+            _scanCts?.Cancel();
+        }
+
+        private bool FilterHistory(object item)
+        {
+            if (item is not HistoryEvent history)
+            {
+                return false;
+            }
+
+            var typeMatch = HistoryFilterType == "All" || string.Equals(history.EventType, HistoryFilterType, StringComparison.OrdinalIgnoreCase);
+            var text = HistoryFilterText?.Trim();
+            var textMatch = string.IsNullOrWhiteSpace(text) ||
+                            history.Details.Contains(text, StringComparison.OrdinalIgnoreCase) ||
+                            history.EventType.Contains(text, StringComparison.OrdinalIgnoreCase);
+            return typeMatch && textMatch;
+        }
+
+        private async Task ExportHistory()
+        {
+            var dialog = new SaveFileDialog
+            {
+                Filter = "CSV Files (*.csv)|*.csv|JSON Files (*.json)|*.json",
+                FileName = $"ClamAV_History_{DateTime.Now:yyyyMMdd_HHmmss}"
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            try
+            {
+                var ext = Path.GetExtension(dialog.FileName);
+                if (string.Equals(ext, ".json", StringComparison.OrdinalIgnoreCase))
+                {
+                    await _historyService.ExportAsJsonAsync(dialog.FileName);
+                }
+                else
+                {
+                    await _historyService.ExportAsCsvAsync(dialog.FileName);
+                }
+
+                MessageBox.Show("History exported successfully.", "Export Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to export history: {ex.Message}", "Export Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task RunHealthCheck()
+        {
+            var result = await HealthCheckService.RunAsync(_clamAVPath);
+            MessageBox.Show(result, "ClamAV Health Check", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private async Task LoadQuarantine()
+        {
+            QuarantineItems.Clear();
+            await _quarantineService.ClearMissingFilesAsync();
+            var items = await _quarantineService.LoadItemsAsync();
+            foreach (var item in items.OrderByDescending(i => i.QuarantinedAt))
+            {
+                QuarantineItems.Add(item);
+            }
+        }
+
+        private async Task RemoveQuarantineItem(QuarantineItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (File.Exists(item.QuarantinePath))
+                {
+                    File.Delete(item.QuarantinePath);
+                }
+
+                await _quarantineService.RemoveItemAsync(item.Id);
+                QuarantineItems.Remove(item);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to delete quarantined file: {ex.Message}", "Quarantine Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task RestoreQuarantineItem(QuarantineItem? item)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!File.Exists(item.QuarantinePath))
+                {
+                    MessageBox.Show("Quarantined file no longer exists.", "Restore Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var targetPath = item.OriginalPath;
+                if (string.IsNullOrWhiteSpace(targetPath) || string.Equals(targetPath, "Unknown", StringComparison.OrdinalIgnoreCase))
+                {
+                    var dialog = new SaveFileDialog
+                    {
+                        FileName = Path.GetFileName(item.QuarantinePath),
+                        Title = "Select restore destination"
+                    };
+
+                    if (dialog.ShowDialog() != true)
+                    {
+                        return;
+                    }
+
+                    targetPath = dialog.FileName;
+                }
+
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
+                File.Move(item.QuarantinePath, targetPath, overwrite: true);
+                await _quarantineService.RemoveItemAsync(item.Id);
+                QuarantineItems.Remove(item);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Failed to restore file: {ex.Message}", "Restore Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async Task ScanFolderUsingDaemon()
+        {
+            var dialog = new VistaFolderBrowserDialog
+            {
+                Description = "Select a folder to scan using clamd daemon.",
+                UseDescriptionForTitle = true
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            var result = await ClamAVService.ScanFolderWithDaemonAsync(dialog.SelectedPath);
+            MessageBox.Show(result, "Daemon Folder Scan", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private async Task ScheduleDailyScan()
+        {
+            if (string.IsNullOrWhiteSpace(ScheduledScanPath))
+            {
+                MessageBox.Show("Set a scheduled scan path first.", "Schedule Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!Directory.Exists(ScheduledScanPath) && !File.Exists(ScheduledScanPath))
+            {
+                MessageBox.Show("Scheduled scan path does not exist.", "Schedule Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (!TimeSpan.TryParseExact(ScheduledScanTime, "hh\\:mm", CultureInfo.InvariantCulture, out var scanTime))
+            {
+                MessageBox.Show("Time format must be HH:mm.", "Schedule Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = await _schedulerService.CreateOrUpdateDailyScanTaskAsync(ScheduledScanPath, scanTime);
+            IsScheduledScanEnabled = await _schedulerService.IsScheduledScanConfiguredAsync();
+            MessageBox.Show(result, "Scheduled Scan", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        private void BrowseScheduledPath()
+        {
+            var folderDialog = new VistaFolderBrowserDialog
+            {
+                Description = "Select a folder to be scanned daily.",
+                UseDescriptionForTitle = true
+            };
+
+            if (folderDialog.ShowDialog() == true)
+            {
+                ScheduledScanPath = folderDialog.SelectedPath;
+            }
+        }
+
+        private async Task RemoveScheduledScan()
+        {
+            var result = await _schedulerService.RemoveDailyScanTaskAsync();
+            IsScheduledScanEnabled = await _schedulerService.IsScheduledScanConfiguredAsync();
+            MessageBox.Show(result, "Scheduled Scan", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         private async Task PingDaemon()
