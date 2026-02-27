@@ -34,7 +34,7 @@ namespace ClamAVGui.Converters
             try
             {
                 string filename = Path.GetFileName(path);
-                string directory = Path.GetDirectoryName(path);
+                var directory = Path.GetDirectoryName(path);
 
                 if (string.IsNullOrEmpty(directory))
                 {

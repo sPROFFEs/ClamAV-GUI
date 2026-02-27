@@ -3,13 +3,18 @@ using System;
 using System.IO;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ClamAVGui.Services
 {
     public static class ClamAVService
     {
+        private static readonly object ClamdLock = new();
+        private static int? _managedClamdPid;
+
         public static bool IsClamAVInstalled(string clamavPath)
         {
             if (string.IsNullOrEmpty(clamavPath) || !Directory.Exists(clamavPath))
@@ -65,48 +70,6 @@ namespace ClamAVGui.Services
             return (stdOutBuffer.ToString(), stdErrBuffer.ToString());
         }
 
-        public static async Task RunClamscanAsync(string clamavPath, string scanPath, Models.ScanOptions options, Action<string> onLineReceived)
-        {
-            if (!Directory.Exists(scanPath) && !File.Exists(scanPath))
-            {
-                onLineReceived?.Invoke("Error: Scan path does not exist.");
-                return;
-            }
-
-            var clamScanExePath = Path.Combine(clamavPath, "clamscan.exe");
-            var dbPath = Path.Combine(clamavPath, "database");
-
-            var arguments = new System.Collections.Generic.List<string>
-            {
-                "--stdout",
-                "-r", // recursive
-                "--database",
-                dbPath
-            };
-
-            // Add arguments from options
-            if (options.HeuristicAlerts) arguments.Add("--heuristic-alerts=yes");
-            if (options.ScanEncrypted) arguments.Add("--alert-encrypted=yes");
-            if (options.LeaveTemps) arguments.Add("--leave-temps=yes");
-            if (options.MoveToQuarantine && !string.IsNullOrWhiteSpace(options.QuarantinePath))
-            {
-                Directory.CreateDirectory(options.QuarantinePath);
-                arguments.Add("--move");
-                arguments.Add(options.QuarantinePath);
-            }
-
-            arguments.Add(scanPath);
-
-            var cmd = Cli.Wrap(clamScanExePath)
-                .WithArguments(arguments)
-                .WithWorkingDirectory(clamavPath)
-                .WithValidation(CommandResultValidation.None)
-                .WithStandardOutputPipe(PipeTarget.ToDelegate(onLineReceived))
-                .WithStandardErrorPipe(PipeTarget.ToDelegate(onLineReceived));
-
-            await cmd.ExecuteAsync();
-        }
-
         public static async Task<string> InitializeConfigurationAsync(string clamavPath)
         {
             try
@@ -147,6 +110,11 @@ namespace ClamAVGui.Services
 
         public static bool IsClamdRunning()
         {
+            if (TryPingDaemon(TimeSpan.FromMilliseconds(300)))
+            {
+                return true;
+            }
+
             return Process.GetProcessesByName("clamd").Length > 0;
         }
 
@@ -198,6 +166,10 @@ namespace ClamAVGui.Services
             try
             {
                 process.Start();
+                lock (ClamdLock)
+                {
+                    _managedClamdPid = process.Id;
+                }
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
             }
@@ -215,7 +187,7 @@ namespace ClamAVGui.Services
             {
                 try
                 {
-                    using var client = new System.Net.Sockets.TcpClient();
+                    using var client = new TcpClient();
                     await client.ConnectAsync("127.0.0.1", port);
                     if (client.Connected)
                     {
@@ -289,13 +261,57 @@ namespace ClamAVGui.Services
             }
         }
 
-        public static Task StopClamdAsync()
+        public static async Task StopClamdAsync()
         {
+            await ShutdownDaemonAsync();
+            await Task.Delay(700);
+
+            int? managedPid;
+            lock (ClamdLock)
+            {
+                managedPid = _managedClamdPid;
+            }
+
+            if (managedPid.HasValue)
+            {
+                try
+                {
+                    var process = Process.GetProcessById(managedPid.Value);
+                    if (!process.HasExited)
+                    {
+                        process.Kill();
+                        process.WaitForExit(1500);
+                    }
+                }
+                catch
+                {
+                    // Process may already be gone.
+                }
+                finally
+                {
+                    lock (ClamdLock)
+                    {
+                        _managedClamdPid = null;
+                    }
+                }
+
+                return;
+            }
+
             foreach (var process in Process.GetProcessesByName("clamd"))
             {
-                process.Kill();
+                try
+                {
+                    if (!process.HasExited)
+                    {
+                        process.Kill();
+                    }
+                }
+                catch
+                {
+                    // Ignore inaccessible processes.
+                }
             }
-            return Task.CompletedTask;
         }
 
         public static async Task<string?> GetLogFilePathAsync(string clamavPath)
@@ -346,13 +362,7 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return "Daemon not running.";
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-                await writer.WriteAsync("nPING\n");
-                return await reader.ReadLineAsync() ?? "No response.";
+                return await SendSimpleDaemonCommandAsync("PING", readToEnd: false) ?? "No response.";
             }
             catch (Exception ex)
             {
@@ -365,13 +375,7 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return "Daemon not running.";
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-                await writer.WriteAsync("nRELOAD\n");
-                return await reader.ReadLineAsync() ?? "No response.";
+                return await SendSimpleDaemonCommandAsync("RELOAD", readToEnd: false) ?? "No response.";
             }
             catch (Exception ex)
             {
@@ -384,13 +388,7 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return "Daemon not running.";
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-                await writer.WriteAsync("nVERSION\n");
-                return await reader.ReadLineAsync() ?? "No response.";
+                return await SendSimpleDaemonCommandAsync("VERSION", readToEnd: false) ?? "No response.";
             }
             catch (Exception ex)
             {
@@ -403,15 +401,18 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return;
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                await writer.WriteAsync("nSHUTDOWN\n");
+                await SendSimpleDaemonCommandAsync("SHUTDOWN", readToEnd: false);
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Error sending SHUTDOWN command: {ex.Message}");
+            }
+            finally
+            {
+                lock (ClamdLock)
+                {
+                    _managedClamdPid = null;
+                }
             }
         }
 
@@ -420,13 +421,7 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return "Daemon not running.";
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-                await writer.WriteAsync("nSTATS\n");
-                return await reader.ReadToEndAsync();
+                return await SendSimpleDaemonCommandAsync("STATS", readToEnd: true) ?? "No response.";
             }
             catch (Exception ex)
             {
@@ -439,13 +434,7 @@ namespace ClamAVGui.Services
             if (!IsClamdRunning()) return "Daemon not running.";
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-                await writer.WriteAsync("nVERSIONCOMMANDS\n");
-                return await reader.ReadToEndAsync();
+                return await SendSimpleDaemonCommandAsync("VERSIONCOMMANDS", readToEnd: true) ?? "No response.";
             }
             catch (Exception ex)
             {
@@ -460,22 +449,129 @@ namespace ClamAVGui.Services
 
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                await client.ConnectAsync("127.0.0.1", 3310);
-                await using var stream = client.GetStream();
-                await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
-                using var reader = new StreamReader(stream, Encoding.ASCII);
-
-                var command = $"nCONTSCAN {filePath}\n";
-                await writer.WriteAsync(command);
-
-                var result = await reader.ReadLineAsync();
+                var escapedPath = filePath.Replace("\"", "\\\"");
+                var command = $"CONTSCAN \"{escapedPath}\"";
+                var result = await SendSimpleDaemonCommandAsync(command, readToEnd: false);
                 return result ?? $"{filePath}: No response from daemon.";
             }
             catch (Exception ex)
             {
                 return $"{filePath}: Error scanning file: {ex.Message}";
             }
+        }
+
+        public static async Task<string> ScanFolderWithDaemonAsync(string folderPath)
+        {
+            if (!IsClamdRunning()) return $"{folderPath}: Daemon not running.";
+            if (!Directory.Exists(folderPath)) return $"{folderPath}: Folder not found.";
+
+            try
+            {
+                var escapedPath = folderPath.Replace("\"", "\\\"");
+                var command = $"CONTSCAN \"{escapedPath}\"";
+                var result = await SendSimpleDaemonCommandAsync(command, readToEnd: true);
+                return result ?? $"{folderPath}: No response from daemon.";
+            }
+            catch (Exception ex)
+            {
+                return $"{folderPath}: Error scanning folder: {ex.Message}";
+            }
+        }
+
+        public static async Task RunClamscanAsync(string clamavPath, string scanPath, Models.ScanOptions options, Action<string> onLineReceived, CancellationToken cancellationToken)
+        {
+            if (!Directory.Exists(scanPath) && !File.Exists(scanPath))
+            {
+                onLineReceived?.Invoke("Error: Scan path does not exist.");
+                return;
+            }
+
+            var clamScanExePath = Path.Combine(clamavPath, "clamscan.exe");
+            var dbPath = Path.Combine(clamavPath, "database");
+
+            var arguments = new System.Collections.Generic.List<string>
+            {
+                "--stdout",
+                "--database",
+                dbPath
+            };
+
+            if (Directory.Exists(scanPath))
+            {
+                arguments.Add("-r");
+            }
+
+            if (options.HeuristicAlerts) arguments.Add("--heuristic-alerts=yes");
+            if (options.ScanEncrypted) arguments.Add("--alert-encrypted=yes");
+            if (options.LeaveTemps) arguments.Add("--leave-temps=yes");
+            if (options.MoveToQuarantine && !string.IsNullOrWhiteSpace(options.QuarantinePath))
+            {
+                Directory.CreateDirectory(options.QuarantinePath);
+                arguments.Add("--move");
+                arguments.Add(options.QuarantinePath);
+            }
+
+            arguments.Add(scanPath);
+
+            var cmd = Cli.Wrap(clamScanExePath)
+                .WithArguments(arguments)
+                .WithWorkingDirectory(clamavPath)
+                .WithValidation(CommandResultValidation.None)
+                .WithStandardOutputPipe(PipeTarget.ToDelegate(onLineReceived))
+                .WithStandardErrorPipe(PipeTarget.ToDelegate(onLineReceived));
+
+            await cmd.ExecuteAsync(cancellationToken);
+        }
+
+        public static Task RunClamscanAsync(string clamavPath, string scanPath, Models.ScanOptions options, Action<string> onLineReceived)
+        {
+            return RunClamscanAsync(clamavPath, scanPath, options, onLineReceived, CancellationToken.None);
+        }
+
+        private static bool TryPingDaemon(TimeSpan timeout)
+        {
+            try
+            {
+                var task = Task.Run(async () =>
+                {
+                    using var client = new TcpClient();
+                    var connectTask = client.ConnectAsync("127.0.0.1", 3310);
+                    if (await Task.WhenAny(connectTask, Task.Delay(timeout)) != connectTask)
+                    {
+                        return false;
+                    }
+
+                    await using var stream = client.GetStream();
+                    await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
+                    using var reader = new StreamReader(stream, Encoding.ASCII);
+                    await writer.WriteAsync("nPING\n");
+                    var response = await reader.ReadLineAsync();
+                    return string.Equals(response, "PONG", StringComparison.OrdinalIgnoreCase);
+                });
+
+                return task.GetAwaiter().GetResult();
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static async Task<string?> SendSimpleDaemonCommandAsync(string command, bool readToEnd)
+        {
+            using var client = new TcpClient();
+            await client.ConnectAsync("127.0.0.1", 3310);
+            await using var stream = client.GetStream();
+            await using var writer = new StreamWriter(stream, Encoding.ASCII) { AutoFlush = true };
+            using var reader = new StreamReader(stream, Encoding.ASCII);
+            await writer.WriteAsync($"n{command}\n");
+
+            if (readToEnd)
+            {
+                return await reader.ReadToEndAsync();
+            }
+
+            return await reader.ReadLineAsync();
         }
     }
 }

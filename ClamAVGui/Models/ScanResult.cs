@@ -5,10 +5,10 @@ namespace ClamAVGui.Models
 {
     public class ScanResult : INotifyPropertyChanged
     {
-        private string _filePath;
+        private string _filePath = string.Empty;
         public string FilePath { get => _filePath; set { _filePath = value; OnPropertyChanged(nameof(FilePath)); } }
 
-        private string _status;
+        private string _status = string.Empty;
         public string Status { get => _status; set { _status = value; OnPropertyChanged(nameof(Status)); } }
 
         public bool IsFolder { get; set; }
