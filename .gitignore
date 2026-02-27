@@ -32,6 +32,14 @@ Desktop.ini
 # Logs
 *.log
 
+# Local app runtime data (when repo is under Documents/ClamAV-GUI)
+clamav_path.txt
+history.json
+monitored_paths.txt
+monitoring_filters.txt
+monitoring_exclusions.txt
+quarantine.json
+
 # Resharper
 _ReSharper*/
 *.[Rr]e[Ss]harper

@@ -40,15 +40,18 @@ ClamAV-GUI is a Windows desktop application written in C# that provides a graphi
 
 ## Features
 
-- browse and select files or directories for scanning  
-- display real-time progress and scan statistics  
-- generate reports of any threats found  
-- integrate seamlessly with an existing ClamAV installation  
+- Scan files and folders with live progress and detailed scan summaries.
+- Real-time monitoring for selected directories with extension filters and exclusions.
+- ClamAV daemon controls (start/stop, ping, reload database, supported commands).
+- Quarantine management with restore and delete actions.
+- Daily scheduled scans using Windows Task Scheduler.
+- Health-check diagnostics for installation, configuration, signatures, and daemon availability.
+- Scan/update history with search, type filters, and CSV/JSON export.
 
 ## Installation
 
 1. clone this repository to your local machine  
-2. open `ClamAVGui.sln` in Visual Studio 2019 or later  
+2. open `ClamAVGui.sln` in Visual Studio 2022 or later  
 3. restore NuGet packages  
 4. build and run the solution  
 5. Or compile the project and run the executable file
@@ -60,11 +63,12 @@ Alternatively, you can download the latest release from the [Releases](https://g
 1. ensure ClamAV is installed and up to date on your system—you can download it from https://www.clamav.net/downloads  
 2. I recommend using the portable version of ClamAV, which is available [here](https://www.clamav.net/downloads/production/clamav-1.4.3.win.x64.zip).  
 3. After decompressing or installing ClamAV, launch ClamAV-GUI.  
-4. Go to the settings panel and click “Locate ClamAV installation path.” Select the root directory of your ClamAV installation.  
-5. On the settings panel, click “Initialize configuration” then “Download latest database.”  
-6. select the target files or directories  
-7. click “Scan” to start the analysis  
-8. review the report for any detections  
+4. Go to the Settings tab and select the root directory of your ClamAV installation.  
+5. Click "Initialize Configuration Files" and then "Download Virus Database."  
+6. Use the Scan tab to run manual scans (file or folder).  
+7. Use the Monitoring tab to enable on-access scanning for selected folders.  
+8. Use the Daemon tab for direct daemon commands and troubleshooting.  
+9. Use the Quarantine and History tabs to review detections and exported reports.  
 
 ## Contributing
 

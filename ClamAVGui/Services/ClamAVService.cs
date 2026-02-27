@@ -449,8 +449,7 @@ namespace ClamAVGui.Services
 
             try
             {
-                var escapedPath = filePath.Replace("\"", "\\\"");
-                var command = $"CONTSCAN \"{escapedPath}\"";
+                var command = $"CONTSCAN {filePath}";
                 var result = await SendSimpleDaemonCommandAsync(command, readToEnd: false);
                 return result ?? $"{filePath}: No response from daemon.";
             }
@@ -467,8 +466,7 @@ namespace ClamAVGui.Services
 
             try
             {
-                var escapedPath = folderPath.Replace("\"", "\\\"");
-                var command = $"CONTSCAN \"{escapedPath}\"";
+                var command = $"CONTSCAN {folderPath}";
                 var result = await SendSimpleDaemonCommandAsync(command, readToEnd: true);
                 return result ?? $"{folderPath}: No response from daemon.";
             }
