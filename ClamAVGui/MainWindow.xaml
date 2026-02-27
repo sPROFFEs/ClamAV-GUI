@@ -142,6 +142,7 @@
                         <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
                             <Button Content="Scan Folder..." Command="{Binding ScanFolderCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource InvertBoolConverter}}" />
                             <Button Content="Scan File..." Command="{Binding ScanFileCommand}" IsEnabled="{Binding IsScanning, Converter={StaticResource InvertBoolConverter}}" Margin="8,0,0,0"/>
+                            <Button Content="Cancel" Command="{Binding CancelScanCommand}" IsEnabled="{Binding IsScanning}" Margin="8,0,0,0"/>
                         </StackPanel>
 
                         <Expander Grid.Row="1" Header="Advanced Options" Margin="0,16,0,0" IsExpanded="True">
@@ -302,7 +303,10 @@
                             <TextBlock Text="Configuration" Style="{StaticResource MaterialDesignHeadline6TextBlock}" />
                             <TextBlock Text="{Binding ClamAVStatusText}" TextWrapping="Wrap" Margin="0,8,0,16" />
 
-                            <Button Content="Change Path..." Command="{Binding ChangePathCommand}" Margin="0,0,0,16" HorizontalAlignment="Left"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                <Button Content="Change Path..." Command="{Binding ChangePathCommand}" HorizontalAlignment="Left"/>
+                                <Button Content="Run Health Check" Command="{Binding RunHealthCheckCommand}" Margin="8,0,0,0"/>
+                            </StackPanel>
 
                             <Separator Margin="0,8,0,8" />
 
@@ -341,6 +345,20 @@
 
                             <Separator Style="{StaticResource MaterialDesignDarkSeparator}" Margin="0,16,0,16" />
 
+                            <TextBlock Text="Scheduled Scan" Style="{StaticResource MaterialDesignHeadline6TextBlock}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Configure one daily scan using Windows Task Scheduler." Margin="0,8,0,8" Opacity="0.8"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox materialDesign:HintAssist.Hint="Path to scan" Text="{Binding ScheduledScanPath, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" MinWidth="360" />
+                                <Button Content="Browse" Command="{Binding BrowseScheduledPathCommand}" Margin="8,0,0,0" />
+                            </StackPanel>
+                            <TextBox materialDesign:HintAssist.Hint="Time (HH:mm)" Text="{Binding ScheduledScanTime, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource MaterialDesignOutlinedTextBox}" Margin="0,8,0,0" Width="180" HorizontalAlignment="Left"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <Button Content="Save Daily Schedule" Command="{Binding ScheduleDailyScanCommand}"/>
+                                <Button Content="Remove Schedule" Command="{Binding RemoveScheduleCommand}" Margin="8,0,0,0"/>
+                                <TextBlock Text="Configured" Foreground="Green" FontWeight="Bold" Margin="12,4,0,0"
+                                           Visibility="{Binding IsScheduledScanEnabled, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </StackPanel>
+
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>
@@ -352,11 +370,21 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <StackPanel Orientation="Horizontal" Grid.Row="0">
-                            <Button Content="Refresh History" Command="{Binding LoadHistoryCommand}" HorizontalAlignment="Left" />
-                            <Button Content="Clear All History" Command="{Binding ClearHistoryCommand}" HorizontalAlignment="Left" Margin="16,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
-                        </StackPanel>
-                    <DataGrid Grid.Row="1" Margin="0,8,0,0" ItemsSource="{Binding HistoryEvents}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
+                        <Grid Grid.Row="0" Margin="0,0,0,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Orientation="Horizontal" Grid.Column="0">
+                                <Button Content="Refresh History" Command="{Binding LoadHistoryCommand}" HorizontalAlignment="Left" />
+                                <Button Content="Export" Command="{Binding ExportHistoryCommand}" HorizontalAlignment="Left" Margin="16,0,0,0" />
+                                <Button Content="Clear All History" Command="{Binding ClearHistoryCommand}" HorizontalAlignment="Left" Margin="16,0,0,0" Style="{StaticResource MaterialDesignOutlinedButton}"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" Width="150" Margin="8,0,8,0" ItemsSource="{Binding HistoryFilterTypes}" SelectedItem="{Binding HistoryFilterType}" />
+                            <TextBox Grid.Column="2" Width="260" Text="{Binding HistoryFilterText, UpdateSourceTrigger=PropertyChanged}" materialDesign:HintAssist.Hint="Search history..." />
+                        </Grid>
+                    <DataGrid Grid.Row="1" Margin="0,8,0,0" ItemsSource="{Binding HistoryView}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="Auto"/>
                             <DataGridTextColumn Header="Event" Binding="{Binding EventType}" Width="Auto"/>
@@ -438,9 +466,9 @@
                                     </Border>
                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,8">
                                         <TextBox Text="{Binding NewFilterText, UpdateSourceTrigger=PropertyChanged}"
-                                                 materialDesign:HintAssist.Hint="e.g., .exe or .txt"
-                                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                                 MinWidth="200"/>
+                                                  materialDesign:HintAssist.Hint="e.g., .exe, *.dll, setup?.exe"
+                                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                                  MinWidth="200"/>
                                         <Button Content="Add Filter"
                                                 Command="{Binding AddFilterCommand}"
                                                 Margin="8,0,0,0"
@@ -498,6 +526,9 @@
 
                             <materialDesign:Card Padding="16">
                                 <StackPanel>
+                                    <Button Content="Scan Folder with Daemon" Command="{Binding ScanWithDaemonFolderCommand}" IsEnabled="{Binding IsClamDRunning}" />
+                                    <TextBlock Text="Scans a selected folder through clamd for on-demand daemon testing." Opacity="0.7" Margin="0,4,0,16" />
+
                                     <Button Content="Ping Daemon" Command="{Binding PingDaemonCommand}" IsEnabled="{Binding IsClamDRunning}" />
                                     <TextBlock Text="Sends a PING command to the daemon. Should respond with PONG." Opacity="0.7" Margin="0,4,0,16" />
 
@@ -512,6 +543,42 @@
                                 </StackPanel>
                             </materialDesign:Card>
                         </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Quarantine">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <Grid Margin="16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Refresh" Command="{Binding LoadQuarantineCommand}"/>
+                        </StackPanel>
+                        <DataGrid Grid.Row="1" Margin="0,8,0,0" ItemsSource="{Binding QuarantineItems}" IsReadOnly="True" AutoGenerateColumns="False" CanUserAddRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Quarantined At" Binding="{Binding QuarantinedAt, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="Auto"/>
+                                <DataGridTextColumn Header="Threat" Binding="{Binding ThreatName}" Width="Auto"/>
+                                <DataGridTextColumn Header="Original Path" Binding="{Binding OriginalPath}" Width="*"/>
+                                <DataGridTextColumn Header="Quarantine File" Binding="{Binding QuarantinePath}" Width="*"/>
+                                <DataGridTemplateColumn Header="Actions" Width="Auto">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Restore"
+                                                        Command="{Binding DataContext.RestoreQuarantineItemCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
+                                                <Button Content="Delete"
+                                                        Margin="8,0,0,0"
+                                                        Command="{Binding DataContext.RemoveQuarantineItemCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                        CommandParameter="{Binding}"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </Grid>
                 </ScrollViewer>
             </TabItem>
