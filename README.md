@@ -60,7 +60,7 @@ Alternatively, you can download the latest release from the [Releases](https://g
 
 ## Usage
 
-1. ensure ClamAV is installed and up to date on your system—you can download it from https://www.clamav.net/downloads  
+1. Ensure ClamAV is installed and up to date on your system—you can download it from https://www.clamav.net/downloads  
 2. I recommend using the portable version of ClamAV, which is available [here](https://www.clamav.net/downloads/production/clamav-1.4.3.win.x64.zip).  
 3. After decompressing or installing ClamAV, launch ClamAV-GUI.  
 4. Go to the Settings tab and select the root directory of your ClamAV installation.  
