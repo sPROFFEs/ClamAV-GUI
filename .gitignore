@@ -32,6 +32,21 @@ Desktop.ini
 # Logs
 *.log
 
+# Node & Frontend
+node_modules/
+dist/
+clamav-gui-go/frontend/dist/
+
+# Go & Wails build artifacts
+clamav-gui-go/build/bin/
+clamav-gui-go/frontend/wailsjs/go/
+clamav-gui-go/frontend/wailsjs/runtime/
+
+# Tool & Editor configs
+.mcp.json
+.praimate/
+opencode.json
+
 # Local app runtime data (when repo is under Documents/ClamAV-GUI)
 clamav_path.txt
 history.json
