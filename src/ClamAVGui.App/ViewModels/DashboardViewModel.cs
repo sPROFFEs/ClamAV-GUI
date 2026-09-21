@@ -15,6 +15,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly Action _navigateToScan;
     private readonly Action _navigateToUpdate;
+    private readonly Action _navigateToSettings;
 
     [ObservableProperty]
     private string _statusText = "Initializing...";
@@ -46,7 +47,8 @@ public sealed partial class DashboardViewModel : ViewModelBase
         IHistoryService historyService,
         ISettingsService settingsService,
         Action navigateToScan,
-        Action navigateToUpdate)
+        Action navigateToUpdate,
+        Action navigateToSettings)
     {
         _binaryLocator = binaryLocator;
         _daemon = daemon;
@@ -54,6 +56,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
         _settingsService = settingsService;
         _navigateToScan = navigateToScan;
         _navigateToUpdate = navigateToUpdate;
+        _navigateToSettings = navigateToSettings;
     }
 
     [RelayCommand]
@@ -61,6 +64,9 @@ public sealed partial class DashboardViewModel : ViewModelBase
 
     [RelayCommand]
     public void UpdateDefinitions() => _navigateToUpdate();
+
+    [RelayCommand]
+    public void OpenSettings() => _navigateToSettings();
 
     [RelayCommand]
     public async Task RefreshAsync()
@@ -71,12 +77,12 @@ public sealed partial class DashboardViewModel : ViewModelBase
         if (installation != null)
         {
             IsClamAvConfigured = true;
-            StatusText = $"ClamAV detected ({installation.Version})";
+            StatusText = $"Engine Active ({installation.Version})";
         }
         else
         {
             IsClamAvConfigured = false;
-            StatusText = "ClamAV not detected. Please configure path in Settings.";
+            StatusText = "ClamAV engine is not installed or detected.";
         }
 
         var health = await _daemon.CheckHealthAsync();

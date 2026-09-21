@@ -5,6 +5,19 @@
              x:DataType="vm:DashboardViewModel">
     <ScrollViewer Margin="28,24">
         <StackPanel Spacing="24" MaxWidth="850" HorizontalAlignment="Left">
+            <!-- Alert Card if ClamAV is not detected -->
+            <Border Background="#2C1A1D" BorderBrush="#E53935" BorderThickness="1.5" CornerRadius="12" Padding="20"
+                    IsVisible="{Binding !IsClamAvConfigured}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <TextBlock Grid.Column="0" Text="⚠️" FontSize="32" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="ClamAV Engine Not Configured" FontWeight="Bold" FontSize="16" Foreground="#EF5350"/>
+                        <TextBlock Text="To scan files and protect your system, install or configure the ClamAV backend." FontSize="13" Opacity="0.9"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="primary" Content="Install / Setup Engine" Command="{Binding OpenSettingsCommand}" VerticalAlignment="Center" Padding="14,8"/>
+                </Grid>
+            </Border>
+
             <!-- Protection Status Hero Banner -->
             <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                     BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1"
@@ -14,7 +27,7 @@
                         <TextBlock Text="🛡️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Protection Overview" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="System Protection Status" FontSize="20" FontWeight="Bold"/>
                     <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding StatusText}" FontSize="14" Opacity="0.8" Margin="0,4,0,8"/>
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="16">
                         <TextBlock Text="{Binding DaemonStats, StringFormat='Daemon: {0}'}" FontSize="12" Opacity="0.7"/>

@@ -4,24 +4,49 @@
              x:Class="ClamAVGui.App.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
     <ScrollViewer Margin="28,24">
-        <StackPanel Spacing="20" MaxWidth="800" HorizontalAlignment="Left">
+        <StackPanel Spacing="20" MaxWidth="850" HorizontalAlignment="Left">
             <StackPanel Spacing="6">
-                <TextBlock Text="Settings &amp; Configuration" FontSize="22" FontWeight="Bold"/>
-                <TextBlock Text="Configure ClamAV executable directories, scanner options, and system behavior." Opacity="0.7"/>
+                <TextBlock Text="Settings &amp; Engine Management" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="Install and configure ClamAV binaries, scanner heuristics, and system automation." Opacity="0.7"/>
             </StackPanel>
+
+            <!-- ClamAV Installation Helper Card -->
+            <Border Classes="card" BorderBrush="#1E88E5" BorderThickness="1.5">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="Install / Setup ClamAV Engine" FontWeight="Bold" FontSize="15"/>
+                            <TextBlock Text="Automatically install or configure the ClamAV backend on your system." FontSize="12" Opacity="0.75"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="primary" Content="⬇ Install ClamAV Engine" Command="{Binding InstallEngineCommand}" IsEnabled="{Binding !IsInstallingEngine}" Padding="14,8"/>
+                    </Grid>
+
+                    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="12">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="System Recommendation / Package Manager Command:" FontWeight="SemiBold" FontSize="11" Opacity="0.7"/>
+                            <TextBox Text="{Binding RecommendedInstallCommand}" IsReadOnly="true" FontFamily="Monospace" FontSize="11" Background="Transparent" BorderThickness="0"/>
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="4" IsVisible="{Binding EngineInstallStatus, Converter={StaticResource NullToBoolConverter}}">
+                        <TextBlock Text="{Binding EngineInstallStatus}" FontWeight="SemiBold" FontSize="12"/>
+                        <ProgressBar IsIndeterminate="{Binding IsInstallingEngine}" IsVisible="{Binding IsInstallingEngine}" Height="4"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
             <!-- Binary Locations Card -->
             <Border Classes="card">
                 <StackPanel Spacing="14">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="ClamAV Engine Locations" FontWeight="Bold" FontSize="14"/>
-                        <Button Grid.Column="1" Content="🔍 Auto-Detect ClamAV" Command="{Binding AutoDetectClamAvCommand}" Padding="10,4" FontSize="11"/>
+                        <TextBlock Grid.Column="0" Text="Engine &amp; Directory Paths" FontWeight="Bold" FontSize="14"/>
+                        <Button Grid.Column="1" Content="🔍 Auto-Detect System Paths" Command="{Binding AutoDetectClamAvCommand}" Padding="10,4" FontSize="11"/>
                     </Grid>
 
                     <StackPanel Spacing="6">
                         <TextBlock Text="Custom ClamAV Binary Directory (Leave blank to use system $PATH)" FontSize="12" Opacity="0.8"/>
                         <Grid ColumnDefinitions="*,Auto">
-                            <TextBox Grid.Column="0" Text="{Binding CustomClamAvPath}" Watermark="e.g. /usr/bin or /opt/homebrew/bin or C:\Program Files\ClamAV" Margin="0,0,8,0"/>
+                            <TextBox Grid.Column="0" Text="{Binding CustomClamAvPath}" Watermark="e.g. /usr/bin, /opt/homebrew/bin, or C:\Program Files\ClamAV" Margin="0,0,8,0"/>
                             <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseClamAvPathCommand}" Padding="12,6"/>
                         </Grid>
                     </StackPanel>

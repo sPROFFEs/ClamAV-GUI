@@ -13,6 +13,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IStartupService _startupService;
     private readonly IFileDialogService _fileDialogService;
     private readonly INotificationService _notificationService;
+    private readonly IClamAvInstallerService _installerService;
 
     [ObservableProperty]
     private string _customClamAvPath = string.Empty;
@@ -44,18 +45,28 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _statusMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _isInstallingEngine;
+
+    [ObservableProperty]
+    private string _engineInstallStatus = string.Empty;
+
+    public string RecommendedInstallCommand => _installerService.RecommendedCommandOrMethod;
+
     public SettingsViewModel(
         ISettingsService settingsService,
         IClamAvBinaryLocator binaryLocator,
         IStartupService startupService,
         IFileDialogService fileDialogService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IClamAvInstallerService installerService)
     {
         _settingsService = settingsService;
         _binaryLocator = binaryLocator;
         _startupService = startupService;
         _fileDialogService = fileDialogService;
         _notificationService = notificationService;
+        _installerService = installerService;
     }
 
     [RelayCommand]
@@ -75,6 +86,43 @@ public sealed partial class SettingsViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public async Task InstallEngineAsync()
+    {
+        if (IsInstallingEngine) return;
+
+        IsInstallingEngine = true;
+        EngineInstallStatus = "Initiating ClamAV installation...";
+
+        var progress = new Progress<string>(msg =>
+        {
+            EngineInstallStatus = msg;
+        });
+
+        try
+        {
+            var success = await _installerService.InstallAsync(progress);
+            if (success)
+            {
+                await LoadSettingsAsync();
+                await _notificationService.ShowAsync("ClamAV Engine", "ClamAV engine has been installed and configured successfully!");
+            }
+            else
+            {
+                await _notificationService.ShowAsync("ClamAV Engine", EngineInstallStatus, NotificationSeverity.Warning);
+            }
+        }
+        catch (Exception ex)
+        {
+            EngineInstallStatus = $"Installation failed: {ex.Message}";
+            await _notificationService.ShowAsync("Engine Install Error", ex.Message, NotificationSeverity.Error);
+        }
+        finally
+        {
+            IsInstallingEngine = false;
+        }
+    }
+
+    [RelayCommand]
     public async Task AutoDetectClamAvAsync()
     {
         var installation = await _binaryLocator.FindInstallationAsync();
@@ -87,7 +135,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         }
         else
         {
-            StatusMessage = "Could not find ClamAV in standard paths. Please specify directory manually.";
+            StatusMessage = "Could not find ClamAV in standard paths. Please specify directory manually or click 'Install ClamAV Engine'.";
             await _notificationService.ShowAsync("Auto-Detect", StatusMessage, NotificationSeverity.Warning);
         }
     }

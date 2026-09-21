@@ -82,6 +82,7 @@ public partial class App : Application
             services.AddSingleton<IClamAvBinaryLocator, WindowsClamAvBinaryLocator>();
             services.AddSingleton<IStartupService, WindowsStartupService>();
             services.AddSingleton<ISchedulerService, WindowsSchedulerService>();
+            services.AddSingleton<IClamAvInstallerService, WindowsClamAvInstallerService>();
         }
         else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
         {
@@ -89,6 +90,7 @@ public partial class App : Application
             services.AddSingleton<IClamAvBinaryLocator, MacOsClamAvBinaryLocator>();
             services.AddSingleton<IStartupService, MacOsStartupService>();
             services.AddSingleton<ISchedulerService, MacOsSchedulerService>();
+            services.AddSingleton<IClamAvInstallerService, MacOsClamAvInstallerService>();
         }
         else
         {
@@ -96,6 +98,7 @@ public partial class App : Application
             services.AddSingleton<IClamAvBinaryLocator, LinuxClamAvBinaryLocator>();
             services.AddSingleton<IStartupService, LinuxStartupService>();
             services.AddSingleton<ISchedulerService, LinuxSchedulerService>();
+            services.AddSingleton<IClamAvInstallerService, LinuxClamAvInstallerService>();
         }
 
         services.AddSingleton<IFileSystemMonitor, FileSystemMonitor>();
@@ -227,7 +230,8 @@ public partial class App : Application
             sp.GetRequiredService<IHistoryService>(),
             sp.GetRequiredService<ISettingsService>(),
             () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 1,
-            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 2
+            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 2,
+            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 9
         ));
 
         services.AddSingleton<ScanViewModel>();

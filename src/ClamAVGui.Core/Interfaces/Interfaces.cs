@@ -153,3 +153,10 @@ public interface ISettingsService
     Task<ApplicationSettings> LoadSettingsAsync(CancellationToken cancellationToken = default);
     Task SaveSettingsAsync(ApplicationSettings settings, CancellationToken cancellationToken = default);
 }
+
+public interface IClamAvInstallerService
+{
+    bool SupportsAutomaticInstallation { get; }
+    string RecommendedCommandOrMethod { get; }
+    Task<bool> InstallAsync(IProgress<string>? progress = null, CancellationToken cancellationToken = default);
+}
