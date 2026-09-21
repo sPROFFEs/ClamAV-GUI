@@ -9,75 +9,91 @@
   ClamAV-GUI
 </h1>
 
+[![CI](https://github.com/sPROFFEs/ClamAV-GUI/actions/workflows/ci.yml/badge.svg)](https://github.com/sPROFFEs/ClamAV-GUI/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/sPROFFEs/ClamAV-GUI?include_prereleases)](https://github.com/sPROFFEs/ClamAV-GUI/releases)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](LICENSE.md)
+
 ## Description
 
-ClamAV-GUI is a Windows desktop application written in C# that provides a graphical interface for the open-source ClamAV antivirus engine. It enables users to pick files or folders, run scans, and view comprehensive results without touching the command line.
+**ClamAV-GUI** is a cross-platform desktop application written in C# and powered by **Avalonia UI** that provides a modern graphical interface for the open-source **ClamAV** antivirus engine.
 
-<p align="center">
-  <img src="/assets_readme/dashboard.png" alt="ClamAV-GUI Screenshot 1" width="600" /><br>
-</p>
+Available natively on:
+- 🐧 **Linux** (`x64`, `ARM64`)
+- 🍏 **macOS** (Apple Silicon `ARM64` & Intel `x64`)
+- 🪟 **Windows** (`x64`, `ARM64`)
 
-<p align="center">
-  <img src="/assets_readme/scan.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
-</p>
+---
 
-<p align="center">
-  <img src="/assets_readme/settings.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
-</p>
+## ⚡ Quick Install (One-Liners)
 
-<p align="center">
-  <img src="/assets_readme/history.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
-</p>
+### Linux & macOS
 
+Run the universal installer script in your terminal:
 
-<p align="center">
-  <img src="/assets_readme/monitoring.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
-</p>
+```bash
+curl -sSL https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalonia/install.sh | bash
+```
 
-<p align="center">
-  <img src="/assets_readme/daemon.png" alt="ClamAV-GUI Screenshot 2" width="600" /><br>
-</p>
+*This automatically detects your OS and architecture (`x86_64` or `arm64`), downloads the latest release, installs it to `~/.local/share/clamav-gui`, creates the `clamav-gui` command, and registers the app in your desktop launcher.*
+
+---
+
+### Windows (PowerShell)
+
+Run the PowerShell installer:
+
+```powershell
+irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalonia/install.ps1 | iex
+```
+
+*This installs ClamAV GUI to `%LOCALAPPDATA%\ClamAV-GUI`, creates a Start Menu shortcut, and adds it to your user `PATH`.*
+
+---
 
 ## Features
 
-- Scan files and folders with live progress and detailed scan summaries.
-- Real-time monitoring for selected directories with extension filters and exclusions.
-- ClamAV daemon controls (start/stop, ping, reload database, supported commands).
-- Quarantine management with restore and delete actions.
-- Daily scheduled scans using Windows Task Scheduler.
-- Health-check diagnostics for installation, configuration, signatures, and daemon availability.
-- Scan/update history with search, type filters, and CSV/JSON export.
+- 🔍 **Manual Scanning**: Scan single files or recursive directories with live progress tracking, threat highlighting, and 1-click quarantine.
+- ⚡ **Quick Scan Preset**: Scan your User / Downloads directory with one click.
+- 🔄 **Virus Definitions Updater**: Integrated `freshclam` updates with live logs, status metrics, and cancellation support.
+- ☣️ **Quarantine Vault**: Isolated threat storage with SHA-256 integrity checks, file size reporting, and safe restore/delete actions.
+- ⚙️ **Daemon Control (`clamd`)**: Start, stop, and reload the ClamAV daemon using secure local loopback sockets without risking external system daemons.
+- 👁️ **Real-Time Monitoring**: Debounced filesystem watcher for user-defined folders with inclusion filters and exclusion lists.
+- ⏰ **Scheduled Scans**: Configure daily automated background scans using native platform schedulers.
+- 🩺 **Diagnostics & Health Check**: Automatic validation of engine components, socket connections, and privacy-redacted diagnostic export.
+- 🛠️ **Auto-Detection**: Auto-detects system ClamAV binaries across `$PATH` and standard platform directories in one click.
 
-## Installation
+---
 
-1. clone this repository to your local machine  
-2. open `ClamAVGui.sln` in Visual Studio 2022 or later  
-3. restore NuGet packages  
-4. build and run the solution  
-5. Or compile the project and run the executable file
+## Manual Download & Building
 
-Alternatively, you can download the latest release from the [Releases](https://github.com/sPROFFEs/ClamAV-GUI/releases) page.
+Standalone portable binaries are available on the [Releases](https://github.com/sPROFFEs/ClamAV-GUI/releases) page.
 
-## Usage
+### Build from Source
 
-1. Ensure ClamAV is installed and up to date on your system—you can download it from https://www.clamav.net/downloads  
-2. I recommend using the portable version of ClamAV, which is available [here](https://www.clamav.net/downloads/production/clamav-1.4.3.win.x64.zip).  
-3. After decompressing or installing ClamAV, launch ClamAV-GUI.  
-4. Go to the Settings tab and select the root directory of your ClamAV installation.  
-5. Click "Initialize Configuration Files" and then "Download Virus Database."  
-6. Use the Scan tab to run manual scans (file or folder).  
-7. Use the Monitoring tab to enable on-access scanning for selected folders.  
-8. Use the Daemon tab for direct daemon commands and troubleshooting.  
-9. Use the Quarantine and History tabs to review detections and exported reports.  
+Requirements: [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+
+```bash
+git clone -b migration/avalonia https://github.com/sPROFFEs/ClamAV-GUI.git
+cd ClamAV-GUI
+
+# Build and run tests
+dotnet build
+dotnet test
+
+# Run the GUI
+dotnet run --project src/ClamAVGui.App/ClamAVGui.App.csproj
+```
+
+---
 
 ## Contributing
 
-Contributions are welcome. please open an issue for bugs or feature requests and submit pull requests with clear descriptions of your changes.
+Contributions are welcome! Please open an issue for bugs or feature suggestions, and submit pull requests targeting the `migration/avalonia` branch.
 
 ## License
 
-This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. see the LICENSE file for details.
+This project is licensed under the Creative Commons Attribution-NonCommercial 4.0 International License. See [LICENSE.md](LICENSE.md) for details.
 
 ## Credits
 
-this project relies on the ClamAV antivirus engine by Cisco Systems, licensed under the GNU General Public License v2. see https://www.clamav.net for more information.
+This project interfaces with the ClamAV antivirus engine developed by Cisco Systems, licensed under GPL v2. See [clamav.net](https://www.clamav.net) for more information.
