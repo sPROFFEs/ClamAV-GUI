@@ -47,3 +47,8 @@ _ReSharper*/
 
 # VS Code
 .vscode/
+
+# Agent / Tooling
+.praimate/
+opencode.json
+

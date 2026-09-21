@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ClamAVGui.App.ViewModels"
+             x:Class="ClamAVGui.App.Views.DiagnosticsView"
+             x:DataType="vm:DiagnosticsViewModel">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Grid.Row="0" Spacing="6">
+            <TextBlock Text="System &amp; Engine Diagnostics" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Inspect ClamAV installation health, runtime paths, and generate shareable redacted diagnostics." Opacity="0.7"/>
+        </StackPanel>
+
+        <!-- Actions -->
+        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,14">
+            <Button Classes="primary" Content="🩺 Run Health Check" Command="{Binding RefreshReportCommand}" Margin="0,0,10,10" Padding="14,8"/>
+            <Button Content="📋 Copy Redacted Report" Command="{Binding CopyRedactedReportCommand}" Margin="0,0,10,10" Padding="14,8"/>
+            <Button Content="📋 Copy Full Report" Command="{Binding CopyFullReportCommand}" Margin="0,0,10,10" Padding="14,8"/>
+        </WrapPanel>
+
+        <!-- Output Report Box -->
+        <Border Grid.Row="2" Classes="card" Padding="12">
+            <ScrollViewer>
+                <TextBox Text="{Binding FormattedReport}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
+            </ScrollViewer>
+        </Border>
+
+        <ProgressBar Grid.Row="3" IsIndeterminate="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Height="4" Margin="0,8,0,0"/>
+    </Grid>
+</UserControl>

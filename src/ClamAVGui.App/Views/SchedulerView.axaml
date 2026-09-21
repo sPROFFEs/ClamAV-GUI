@@ -1,0 +1,42 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ClamAVGui.App.ViewModels"
+             x:Class="ClamAVGui.App.Views.SchedulerView"
+             x:DataType="vm:SchedulerViewModel">
+    <ScrollViewer Margin="28,24">
+        <StackPanel Spacing="20" MaxWidth="750" HorizontalAlignment="Left">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Automated Scan Scheduler" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="Schedule recurring daily scans on this computer using native OS services." Opacity="0.7"/>
+            </StackPanel>
+
+            <Border Classes="card">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Daily Scan Configuration" FontWeight="Bold" FontSize="14"/>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Target Folder to Scan Daily" FontSize="12" Opacity="0.8"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Grid.Column="0" Text="{Binding ScheduledScanPath}" Watermark="Select a folder for scheduled scan..." Margin="0,0,8,0"/>
+                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowsePathCommand}" Padding="12,6"/>
+                        </Grid>
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Schedule Time (HH:mm in 24-hour format)" FontSize="12" Opacity="0.8"/>
+                        <TextBox Text="{Binding ScheduledScanTime}" MaxWidth="160" HorizontalAlignment="Left"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,10,0,0">
+                        <Button Classes="primary" Content="💾 Save &amp; Enable Daily Scan" Command="{Binding SaveScheduleCommand}" Padding="16,8"/>
+                        <Button Classes="danger" Content="✕ Remove Schedule" Command="{Binding RemoveScheduleCommand}" Padding="14,8"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13"/>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

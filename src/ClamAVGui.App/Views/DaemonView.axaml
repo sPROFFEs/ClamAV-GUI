@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ClamAVGui.App.ViewModels"
+             x:Class="ClamAVGui.App.Views.DaemonView"
+             x:DataType="vm:DaemonViewModel">
+    <ScrollViewer Margin="28,24">
+        <StackPanel Spacing="20" MaxWidth="850" HorizontalAlignment="Left">
+            <StackPanel Spacing="6">
+                <TextBlock Text="ClamAV Daemon Service (clamd)" FontSize="22" FontWeight="Bold"/>
+                <TextBlock Text="High-performance background scanner daemon providing fast scans and socket communication." Opacity="0.7"/>
+            </StackPanel>
+
+            <!-- Daemon State Card -->
+            <Border Classes="card">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+                    <Border Grid.Column="0" Grid.RowSpan="3"
+                            Background="{Binding IsDaemonRunning, Converter={StaticResource InfectedToBrushConverter}}"
+                            CornerRadius="14" Width="48" Height="48" Margin="0,0,16,0" VerticalAlignment="Center">
+                        <TextBlock Text="⚙️" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding StatusMessage}" FontSize="16" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Version, StringFormat='Daemon Version: {0}'}" FontSize="12" Opacity="0.8" Margin="0,4,0,4"/>
+                    <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding Stats, StringFormat='Statistics: {0}'}" FontSize="12" Opacity="0.7"/>
+                </Grid>
+            </Border>
+
+            <!-- Action Controls -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Daemon Lifecycle Controls" FontWeight="Bold" FontSize="14"/>
+                <WrapPanel Orientation="Horizontal">
+                    <Button Classes="success" Content="▶ Start Daemon" Command="{Binding StartDaemonCommand}" IsEnabled="{Binding !IsDaemonRunning}" Margin="0,0,10,10" Padding="14,8"/>
+                    <Button Classes="danger" Content="⏹ Stop Daemon" Command="{Binding StopDaemonCommand}" IsEnabled="{Binding IsDaemonRunning}" Margin="0,0,10,10" Padding="14,8"/>
+                    <Button Content="🔄 Reload Database" Command="{Binding ReloadDatabaseCommand}" IsEnabled="{Binding IsDaemonRunning}" Margin="0,0,10,10" Padding="14,8"/>
+                    <Button Content="Ping Status" Command="{Binding RefreshStatusCommand}" Margin="0,0,10,10" Padding="14,8"/>
+                </WrapPanel>
+            </StackPanel>
+
+            <!-- Command Diagnostics Output -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Service Output &amp; Diagnostics" FontWeight="Bold" FontSize="14"/>
+                <Border Classes="card" MinHeight="120">
+                    <TextBlock Text="{Binding CommandOutput}" FontFamily="Monospace" FontSize="12" TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

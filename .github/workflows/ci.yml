@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, migration/** ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    name: Build & Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Architecture Safety Checks
+        shell: bash
+        run: |
+          echo "Running Architecture Guard Checks on Core..."
+          # Core must not reference WPF
+          if grep -rn --include="*.cs" "System\.Windows" src/ClamAVGui.Core; then
+            echo "ERROR: WPF reference found in Core"
+            exit 1
+          fi
+          # Core must not contain Windows executable assumptions
+          if grep -rn --include="*.cs" "\.exe" src/ClamAVGui.Core; then
+            echo "ERROR: Windows executable assumption found in Core"
+            exit 1
+          fi
+          # Core must not contain OS branching
+          if grep -rn --include="*.cs" "OperatingSystem\." src/ClamAVGui.Core; then
+            echo "ERROR: OS branching found in Core"
+            exit 1
+          fi
+          # Core must not contain Windows path assumptions
+          if grep -rn --include="*.cs" "C:\\\\" src/ClamAVGui.Core; then
+            echo "ERROR: Windows path assumption found in Core"
+            exit 1
+          fi
+          # Core must not reference Avalonia
+          if grep -rn --include="*.cs" "Avalonia" src/ClamAVGui.Core; then
+            echo "ERROR: Avalonia reference found in Core"
+            exit 1
+          fi
+          echo "Architecture checks passed."
+
+      - name: Restore dependencies
+        run: |
+          dotnet restore src/ClamAVGui.App/ClamAVGui.App.csproj
+          dotnet restore tests/ClamAVGui.Core.Tests/ClamAVGui.Core.Tests.csproj
+          dotnet restore tests/ClamAVGui.Platform.Tests/ClamAVGui.Platform.Tests.csproj
+
+      - name: Build Core, Platform & App
+        run: |
+          dotnet build src/ClamAVGui.App/ClamAVGui.App.csproj --configuration Release --no-restore
+
+      - name: Run Core Tests
+        run: |
+          dotnet test tests/ClamAVGui.Core.Tests/ClamAVGui.Core.Tests.csproj --configuration Release
+
+      - name: Run Platform Tests
+        run: |
+          dotnet test tests/ClamAVGui.Platform.Tests/ClamAVGui.Platform.Tests.csproj --configuration Release
+
+  publish-matrix:
+    name: Publish Artifacts (${{ matrix.rid }})
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rid: [win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, osx-arm64]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish ${{ matrix.rid }}
+        run: |
+          dotnet publish src/ClamAVGui.App/ClamAVGui.App.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.rid }} \
+            --self-contained true \
+            --output ./publish/${{ matrix.rid }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClamAV-GUI-${{ matrix.rid }}
+          path: ./publish/${{ matrix.rid }}

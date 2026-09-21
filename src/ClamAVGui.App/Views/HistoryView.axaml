@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ClamAVGui.App.ViewModels"
+             xmlns:models="using:ClamAVGui.Core.Models"
+             x:Class="ClamAVGui.App.Views.HistoryView"
+             x:DataType="vm:HistoryViewModel">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Grid.Row="0" Spacing="6">
+            <TextBlock Text="Activity &amp; Scan History" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Review past scans, updates, and threat detection events." Opacity="0.7"/>
+        </StackPanel>
+
+        <!-- Search and Actions Bar -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,180,Auto,Auto,Auto" Margin="0,16,0,12">
+            <TextBox Grid.Column="0" Text="{Binding FilterText}" Watermark="Search logs and events..." Margin="0,0,8,0"/>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding FilterTypes}" SelectedItem="{Binding FilterType}" HorizontalAlignment="Stretch" Margin="0,0,8,0"/>
+            <Button Grid.Column="2" Content="📥 Export CSV" Command="{Binding ExportCsvCommand}" Margin="0,0,8,0"/>
+            <Button Grid.Column="3" Content="📥 Export JSON" Command="{Binding ExportJsonCommand}" Margin="0,0,8,0"/>
+            <Button Grid.Column="4" Classes="danger" Content="🗑 Clear All" Command="{Binding ClearHistoryCommand}"/>
+        </Grid>
+
+        <!-- History Items Table -->
+        <Border Grid.Row="2" Classes="card" Padding="0">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="12,8" CornerRadius="8,8,0,0">
+                    <Grid ColumnDefinitions="160,110,*,Auto">
+                        <TextBlock Grid.Column="0" Text="Timestamp (UTC)" FontWeight="SemiBold" FontSize="12"/>
+                        <TextBlock Grid.Column="1" Text="Type" FontWeight="SemiBold" FontSize="12"/>
+                        <TextBlock Grid.Column="2" Text="Event Details" FontWeight="SemiBold" FontSize="12"/>
+                        <TextBlock Grid.Column="3" Text="Action" FontWeight="SemiBold" FontSize="12" Margin="10,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Empty State -->
+                <TextBlock Text="No events match your current filter."
+                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Opacity="0.5" FontSize="13" Margin="20"
+                           IsVisible="{Binding !Events.Count}"/>
+
+                <ListBox ItemsSource="{Binding Events}" Background="Transparent" IsVisible="{Binding Events.Count}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="models:HistoryEvent">
+                            <Grid ColumnDefinitions="160,110,*,Auto" Margin="0,3">
+                                <TextBlock Grid.Column="0" Text="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Opacity="0.75" FontSize="12" VerticalAlignment="Center"/>
+                                <Border Grid.Column="1" Background="{Binding EventType, Converter={StaticResource EventTypeToBrushConverter}}" CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding EventType}" Foreground="White" FontWeight="Bold" FontSize="10"/>
+                                </Border>
+                                <TextBlock Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
+                                <Button Grid.Column="3" Content="✕"
+                                        Command="{Binding $parent[UserControl].((vm:HistoryViewModel)DataContext).DeleteEventCommand}"
+                                        CommandParameter="{Binding}"
+                                        Padding="6,2" FontSize="11" Margin="8,0,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <StackPanel Grid.Row="3" Margin="0,12,0,0" Orientation="Horizontal" Spacing="10">
+            <Button Content="Refresh History" Command="{Binding LoadHistoryCommand}"/>
+        </StackPanel>
+    </Grid>
+</UserControl>

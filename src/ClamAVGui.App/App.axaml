@@ -1,0 +1,71 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:ClamAVGui.App.Converters"
+             x:Class="ClamAVGui.App.App"
+             RequestedThemeVariant="Default">
+    <Application.Resources>
+        <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
+        <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
+        <converters:InfectedToBrushConverter x:Key="InfectedToBrushConverter"/>
+        <converters:EventTypeToBrushConverter x:Key="EventTypeToBrushConverter"/>
+        <converters:FilePathToShortPathConverter x:Key="FilePathToShortPathConverter"/>
+        <converters:FileSizeConverter x:Key="FileSizeConverter"/>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <!-- Card Style -->
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+
+        <!-- Metric Card -->
+        <Style Selector="Border.metric-card">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="14"/>
+        </Style>
+
+        <!-- Accent Action Buttons -->
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#1E88E5"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+        </Style>
+
+        <Style Selector="Button.success">
+            <Setter Property="Background" Value="#43A047"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#E53935"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="14,8"/>
+        </Style>
+
+        <!-- Nav Item Button -->
+        <Style Selector="RadioButton.nav-btn">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="14,10"/>
+            <Setter Property="Margin" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+    </Application.Styles>
+</Application>

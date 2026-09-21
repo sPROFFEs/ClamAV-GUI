@@ -1,0 +1,36 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:ClamAVGui.App.ViewModels"
+             x:Class="ClamAVGui.App.Views.UpdateView"
+             x:DataType="vm:UpdateViewModel">
+    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto">
+        <StackPanel Grid.Row="0" Spacing="6">
+            <TextBlock Text="Virus Definitions &amp; Signatures" FontSize="22" FontWeight="Bold"/>
+            <TextBlock Text="Keep virus definitions updated to protect against the latest threats." Opacity="0.7"/>
+        </StackPanel>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,14" Spacing="12">
+            <Button Classes="primary" Content="🔄 Update Definitions Now" Command="{Binding UpdateSignaturesCommand}" IsEnabled="{Binding !IsUpdating}" Padding="16,10"/>
+            <Button Classes="danger" Content="Cancel" Command="{Binding CancelUpdateCommand}" IsVisible="{Binding IsUpdating}" Padding="14,10"/>
+        </StackPanel>
+
+        <!-- Console Log Output Card -->
+        <Border Grid.Row="2" Classes="card" Padding="12">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="freshclam Log Output" FontWeight="Bold" FontSize="12" Margin="0,0,0,8" Opacity="0.8"/>
+                <ScrollViewer>
+                    <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
+                </ScrollViewer>
+            </DockPanel>
+        </Border>
+
+        <!-- Status Bottom Banner -->
+        <Border Grid.Row="3" Classes="card" Margin="0,12,0,0">
+            <StackPanel Spacing="6">
+                <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" FontSize="13"/>
+                <ProgressBar IsIndeterminate="{Binding IsUpdating}" IsVisible="{Binding IsUpdating}" Height="4"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
