@@ -23,8 +23,7 @@ try {
     $ReleaseInfo = @(Invoke-RestMethod -Uri $GitHubApi -Headers @{
         "Accept" = "application/vnd.github+json"
         "X-GitHub-Api-Version" = "2022-11-28"
-        "User-Agent" = "ClamAV-GUI-Installer"
-    } -TimeoutSec 30)
+    } -UserAgent "ClamAV-GUI-Installer" -TimeoutSec 30)
     $Asset = $ReleaseInfo |
         ForEach-Object { $_.assets } |
         Where-Object { $_.name -match "-$([regex]::Escape($Arch))\.zip$" } |
@@ -49,7 +48,7 @@ $StagingDir = Join-Path $env:LOCALAPPDATA "ClamAV-GUI-staging-$([guid]::NewGuid(
 $BackupDir = Join-Path $env:LOCALAPPDATA "ClamAV-GUI-backup-$([guid]::NewGuid().ToString('N'))"
 
 try {
-    Invoke-WebRequest -UseBasicParsing -Uri $DownloadUrl -OutFile $TempZip -Headers @{ "User-Agent" = "ClamAV-GUI-Installer" } -TimeoutSec 300
+    Invoke-WebRequest -UseBasicParsing -Uri $DownloadUrl -OutFile $TempZip -UserAgent "ClamAV-GUI-Installer" -TimeoutSec 300
     if (-not (Test-Path -LiteralPath $TempZip) -or (Get-Item -LiteralPath $TempZip).Length -ne $ExpectedSize) {
         throw "The downloaded package is empty or incomplete."
     }
