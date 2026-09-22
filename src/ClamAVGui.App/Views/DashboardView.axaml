@@ -3,88 +3,81 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              x:Class="ClamAVGui.App.Views.DashboardView"
              x:DataType="vm:DashboardViewModel">
-    <ScrollViewer Margin="28,24">
-        <StackPanel Spacing="24" MaxWidth="850" HorizontalAlignment="Left">
-            <!-- Alert Card if ClamAV is not detected -->
-            <Border Background="#2C1A1D" BorderBrush="#E53935" BorderThickness="1.5" CornerRadius="12" Padding="20"
+    <ScrollViewer>
+        <StackPanel Margin="36,30" Spacing="24" MaxWidth="980" HorizontalAlignment="Left">
+            <StackPanel Spacing="5">
+                <TextBlock Text="Security at a glance" FontSize="27" FontWeight="Bold" Foreground="#17212B"/>
+                <TextBlock Text="Review your protection status and take action when needed." FontSize="14" Foreground="#71808E"/>
+            </StackPanel>
+
+            <Border Background="#FFFFFF" BorderBrush="#E3E9ED" BorderThickness="1" CornerRadius="14" Padding="26">
+                <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto">
+                    <Border Grid.RowSpan="3" Width="64" Height="64" CornerRadius="18" Background="#E8F5F1" VerticalAlignment="Center" Margin="0,0,20,0">
+                        <TextBlock Text="✓" FontSize="34" FontWeight="SemiBold" Foreground="#087E68" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Grid.Column="1" Text="Protection status" FontSize="13" FontWeight="SemiBold" Foreground="#71808E"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding StatusText}" FontSize="21" FontWeight="Bold" Foreground="#17212B" Margin="0,3,0,4"/>
+                    <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="8">
+                        <Ellipse Width="7" Height="7" Fill="#20A477" VerticalAlignment="Center"/>
+                        <TextBlock Text="Definitions" FontSize="12" Foreground="#71808E"/>
+                        <TextBlock Text="{Binding VirusDefinitionsVersion}" FontSize="12" FontWeight="SemiBold" Foreground="#425160"/>
+                    </StackPanel>
+                    <Button Grid.Column="2" Grid.RowSpan="3" Classes="primary" Command="{Binding StartScanCommand}" VerticalAlignment="Center" MinWidth="150">
+                        <StackPanel Orientation="Horizontal" Spacing="9">
+                            <TextBlock Text="⌕" FontSize="20" VerticalAlignment="Center"/>
+                            <TextBlock Text="Quick scan" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </Border>
+
+            <Border Background="#FFF9EF" BorderBrush="#F1D7AC" BorderThickness="1" CornerRadius="12" Padding="18"
                     IsVisible="{Binding !IsClamAvConfigured}">
                 <Grid ColumnDefinitions="Auto,*,Auto">
-                    <TextBlock Grid.Column="0" Text="⚠️" FontSize="32" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="ClamAV Engine Not Configured" FontWeight="Bold" FontSize="16" Foreground="#EF5350"/>
-                        <TextBlock Text="To scan files and protect your system, install or configure the ClamAV backend." FontSize="13" Opacity="0.9"/>
-                    </StackPanel>
-                    <Button Grid.Column="2" Classes="primary" Content="Install / Setup Engine" Command="{Binding OpenSettingsCommand}" VerticalAlignment="Center" Padding="14,8"/>
-                </Grid>
-            </Border>
-
-            <!-- Protection Status Hero Banner -->
-            <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="1"
-                    CornerRadius="12" Padding="24">
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
-                    <Border Grid.Column="0" Grid.RowSpan="3" Background="#1E88E5" CornerRadius="16" Width="56" Height="56" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <TextBlock Text="🛡️" FontSize="28" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <Border Width="34" Height="34" CornerRadius="10" Background="#FFF0D4" Margin="0,0,13,0">
+                        <TextBlock Text="!" FontSize="19" FontWeight="Bold" Foreground="#A66A12" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
-
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="System Protection Status" FontSize="20" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding StatusText}" FontSize="14" Opacity="0.8" Margin="0,4,0,8"/>
-                    <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="16">
-                        <TextBlock Text="{Binding DaemonStats, StringFormat='Daemon: {0}'}" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="•" Opacity="0.4"/>
-                        <TextBlock Text="{Binding VirusDefinitionsVersion, StringFormat='Signatures: {0}'}" FontSize="12" Opacity="0.7"/>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="Antivirus engine setup required" FontSize="14" FontWeight="Bold" Foreground="#604714"/>
+                        <TextBlock Text="Install or configure ClamAV to scan files and enable protection." FontSize="12" Foreground="#7A6740" TextWrapping="Wrap"/>
                     </StackPanel>
+                    <Button Grid.Column="2" Content="Configure" Command="{Binding OpenSettingsCommand}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                 </Grid>
             </Border>
 
-            <!-- Metrics Grid -->
-            <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto">
+            <Grid ColumnDefinitions="*,*,*">
                 <Border Grid.Column="0" Classes="metric-card" Margin="0,0,8,0">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Total Scans Run" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="{Binding TotalScans}" FontSize="28" FontWeight="Bold"/>
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="SCANS COMPLETED" FontSize="10" FontWeight="Bold" Foreground="#84919D"/>
+                        <TextBlock Text="{Binding TotalScans}" FontSize="29" FontWeight="Bold" Foreground="#17212B"/>
+                        <TextBlock Text="All recorded scans" FontSize="11" Foreground="#84919D"/>
                     </StackPanel>
                 </Border>
-
-                <Border Grid.Column="1" Classes="metric-card" Margin="4,0,4,0">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Threats Detected" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="{Binding TotalInfectedFiles}" FontSize="28" FontWeight="Bold" Foreground="#E53935"/>
+                <Border Grid.Column="1" Classes="metric-card" Margin="4,0">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="THREATS DETECTED" FontSize="10" FontWeight="Bold" Foreground="#84919D"/>
+                        <TextBlock Text="{Binding TotalInfectedFiles}" FontSize="29" FontWeight="Bold" Foreground="#C34A46"/>
+                        <TextBlock Text="Across scan history" FontSize="11" Foreground="#84919D"/>
                     </StackPanel>
                 </Border>
-
                 <Border Grid.Column="2" Classes="metric-card" Margin="8,0,0,0">
-                    <StackPanel Spacing="6">
-                        <TextBlock Text="Last Definitions Update" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="{Binding LastUpdateTime}" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="LAST INTELLIGENCE UPDATE" FontSize="10" FontWeight="Bold" Foreground="#84919D"/>
+                        <TextBlock Text="{Binding LastUpdateTime}" FontSize="17" FontWeight="Bold" Foreground="#17212B" TextTrimming="CharacterEllipsis"/>
+                        <Button Content="Check for updates" Command="{Binding UpdateDefinitionsCommand}" HorizontalAlignment="Left" Padding="0" Background="Transparent" Foreground="#087E68" FontSize="11"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
-            <!-- Quick Actions Section -->
-            <StackPanel Spacing="12">
-                <TextBlock Text="Quick Actions" FontSize="16" FontWeight="Bold"/>
-                <WrapPanel Orientation="Horizontal">
-                    <Button Classes="primary" Command="{Binding StartScanCommand}" Margin="0,0,12,12">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🔍"/>
-                            <TextBlock Text="Start Manual Scan"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding UpdateDefinitionsCommand}" Margin="0,0,12,12" Padding="14,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🔄"/>
-                            <TextBlock Text="Update Definitions"/>
-                        </StackPanel>
-                    </Button>
-                    <Button Command="{Binding RefreshCommand}" Margin="0,0,12,12" Padding="14,8">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="🔃"/>
-                            <TextBlock Text="Refresh Status"/>
-                        </StackPanel>
-                    </Button>
-                </WrapPanel>
-            </StackPanel>
+            <Border Background="#FFFFFF" BorderBrush="#E3E9ED" BorderThickness="1" CornerRadius="12" Padding="20">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Engine status" FontSize="14" FontWeight="Bold" Foreground="#263440"/>
+                        <TextBlock Text="{Binding DaemonStats}" FontSize="12" Foreground="#71808E"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="Refresh status" Command="{Binding RefreshCommand}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

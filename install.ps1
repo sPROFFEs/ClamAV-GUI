@@ -9,9 +9,11 @@ $GitHubApi = "https://api.github.com/repos/$Repo/releases"
 Write-Host "=== ClamAV GUI Windows Installer ===" -ForegroundColor Cyan
 
 # 1. Determine architecture
-$Arch = if ([System.Environment]::Is64BitOperatingSystem) { "win-x64" } else { "win-x86" }
-if ($Arch -ne "win-x64") {
-    Write-Error "Only 64-bit Windows is currently supported."
+$Architecture = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+$Arch = switch ($Architecture) {
+    "x64" { "win-x64" }
+    "arm64" { "win-arm64" }
+    default { Write-Error "Unsupported Windows architecture: $Architecture" }
 }
 
 # 2. Find download URL
@@ -31,7 +33,7 @@ catch {
 }
 
 if (-not $DownloadUrl) {
-    $DownloadUrl = "https://github.com/$Repo/releases/download/v2.0.0-beta.1/ClamAV-GUI-v2.0.0-beta-$Arch.zip"
+    throw "No release asset found for $Arch. Check https://github.com/$Repo/releases"
 }
 
 Write-Host "Downloading ClamAV GUI from: $DownloadUrl" -ForegroundColor Gray

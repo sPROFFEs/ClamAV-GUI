@@ -57,8 +57,9 @@ RELEASE_JSON=$(curl -sSL -H "Accept: application/vnd.github.v3+json" "${GITHUB_A
 DOWNLOAD_URL=$(echo "${RELEASE_JSON}" | grep -o "https://github.com/${REPO}/releases/download/[^\"]*${OS_TAG}-${ARCH_TAG}\.tar\.gz" | head -n 1 || true)
 
 if [ -z "${DOWNLOAD_URL}" ]; then
-    # Fallback to current release tag
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v2.0.0-beta.1/ClamAV-GUI-v2.0.0-beta-${OS_TAG}-${ARCH_TAG}.tar.gz"
+    echo -e "${RED}No release asset found for ${OS_TAG}-${ARCH_TAG}.${RESET}"
+    echo "Check the available downloads at https://github.com/${REPO}/releases"
+    exit 1
 fi
 
 echo -e "Downloading from: ${BLUE}${DOWNLOAD_URL}${RESET}"

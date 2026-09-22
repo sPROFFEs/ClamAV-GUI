@@ -22,16 +22,16 @@ public sealed partial class MainViewModel : ViewModelBase
 
     public ObservableCollection<string> NavItems { get; } = new()
     {
-        "🛡️  Dashboard",
-        "🔍  Scan",
-        "🔄  Updates",
-        "📋  History",
-        "☣️  Quarantine",
-        "⚙️  Daemon",
-        "👁️  Monitoring",
-        "⏰  Scheduler",
-        "🩺  Diagnostics",
-        "🛠️  Settings"
+        "Overview",
+        "Scan",
+        "Security intelligence",
+        "Protection history",
+        "Quarantine",
+        "Engine",
+        "Real-time monitoring",
+        "Scheduled scans",
+        "Diagnostics",
+        "Settings"
     };
 
     [ObservableProperty]
