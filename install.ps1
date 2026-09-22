@@ -114,5 +114,6 @@ if (($UserPath -split ';' | ForEach-Object { $_.TrimEnd('\') }) -notcontains $In
     Write-Host "Added $InstallDir to User PATH." -ForegroundColor Gray
 }
 
-Write-Host "`n✓ ClamAV GUI has been successfully installed!" -ForegroundColor Green
-Write-Host "You can launch it from your Start Menu or by running '$ExePath'."
+Write-Host "`nClamAV GUI has been successfully installed!" -ForegroundColor Green
+Write-Host "You can launch it from your Start Menu."
+Write-Host "Executable: $ExePath"

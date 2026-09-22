@@ -122,7 +122,8 @@ jobs:
             .\install.ps1
           }
           catch {
-            Write-Host "::error title=Windows installer failed::$($_.Exception.Message)"
+            $Details = ($_ | Format-List * -Force | Out-String).Trim() -replace '\r?\n', '%0A'
+            Write-Host "::error title=Windows installer failed::$Details"
             throw
           }
 
