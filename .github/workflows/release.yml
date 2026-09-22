@@ -117,7 +117,14 @@ jobs:
 
       - name: Install from the published release
         shell: powershell
-        run: .\install.ps1
+        run: |
+          try {
+            .\install.ps1
+          }
+          catch {
+            Write-Host "::error title=Windows installer failed::$($_.Exception.Message)"
+            throw
+          }
 
       - name: Verify and launch installed app
         shell: powershell

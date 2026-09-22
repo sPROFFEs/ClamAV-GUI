@@ -20,10 +20,14 @@ $Arch = switch ($Architecture) {
 Write-Host "Fetching latest release information..."
 $DownloadUrl = $null
 try {
-    $ReleaseInfo = @(Invoke-RestMethod -Uri $GitHubApi -Headers @{
-        "Accept" = "application/vnd.github+json"
-        "X-GitHub-Api-Version" = "2022-11-28"
-    } -UserAgent "ClamAV-GUI-Installer" -TimeoutSec 30)
+    $ReleaseJson = & curl.exe --fail --silent --show-error --location --retry 3 --connect-timeout 15 --max-time 60 `
+        -H "Accept: application/vnd.github+json" `
+        -H "X-GitHub-Api-Version: 2022-11-28" `
+        $GitHubApi | Out-String
+    if ($LASTEXITCODE -ne 0) {
+        throw "curl.exe could not retrieve the GitHub release list (exit $LASTEXITCODE)."
+    }
+    $ReleaseInfo = @(ConvertFrom-Json -InputObject $ReleaseJson)
     $Asset = $ReleaseInfo |
         ForEach-Object { $_.assets } |
         Where-Object { $_.name -match "-$([regex]::Escape($Arch))\.zip$" } |
@@ -48,7 +52,10 @@ $StagingDir = Join-Path $env:LOCALAPPDATA "ClamAV-GUI-staging-$([guid]::NewGuid(
 $BackupDir = Join-Path $env:LOCALAPPDATA "ClamAV-GUI-backup-$([guid]::NewGuid().ToString('N'))"
 
 try {
-    Invoke-WebRequest -UseBasicParsing -Uri $DownloadUrl -OutFile $TempZip -UserAgent "ClamAV-GUI-Installer" -TimeoutSec 300
+    & curl.exe --fail --show-error --location --retry 3 --connect-timeout 15 --max-time 300 --output $TempZip $DownloadUrl
+    if ($LASTEXITCODE -ne 0) {
+        throw "curl.exe could not download the release package (exit $LASTEXITCODE)."
+    }
     if (-not (Test-Path -LiteralPath $TempZip) -or (Get-Item -LiteralPath $TempZip).Length -ne $ExpectedSize) {
         throw "The downloaded package is empty or incomplete."
     }
