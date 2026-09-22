@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 REPO="sPROFFEs/ClamAV-GUI"
 GITHUB_API="https://api.github.com/repos/${REPO}/releases"
@@ -28,7 +28,7 @@ case "${OS}" in
     *)
         echo -e "${RED}Unsupported Operating System: ${OS}${RESET}"
         echo "For Windows, run the PowerShell one-liner:"
-        echo "  irm https://raw.githubusercontent.com/${REPO}/main/install.ps1 | iex"
+        echo "  irm https://raw.githubusercontent.com/${REPO}/migration/avalonia/install.ps1 | iex"
         exit 1
         ;;
 esac
@@ -47,14 +47,15 @@ case "${ARCH}" in
         ;;
 esac
 
-ASSET_PATTERN="ClamAV-GUI-.*-${OS_TAG}-${ARCH_TAG}\.tar\.gz"
-
 # 3. Find latest release asset URL
 echo -e "Detecting latest release for ${BOLD}${OS_TAG}-${ARCH_TAG}${RESET}..."
 
-RELEASE_JSON=$(curl -sSL -H "Accept: application/vnd.github.v3+json" "${GITHUB_API}" || true)
+RELEASE_JSON=$(curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    "${GITHUB_API}?per_page=20")
 
-DOWNLOAD_URL=$(echo "${RELEASE_JSON}" | grep -o "https://github.com/${REPO}/releases/download/[^\"]*${OS_TAG}-${ARCH_TAG}\.tar\.gz" | head -n 1 || true)
+DOWNLOAD_URL=$(echo "${RELEASE_JSON}" | grep -oE "https://github.com/${REPO}/releases/download/[^\" ]*${OS_TAG}-${ARCH_TAG}\\.tar\\.gz" | head -n 1 || true)
 
 if [ -z "${DOWNLOAD_URL}" ]; then
     echo -e "${RED}No release asset found for ${OS_TAG}-${ARCH_TAG}.${RESET}"
@@ -72,7 +73,21 @@ cleanup() {
 trap cleanup EXIT
 
 ARCHIVE_PATH="${TMP_DIR}/clamav-gui.tar.gz"
-curl -sSL -o "${ARCHIVE_PATH}" "${DOWNLOAD_URL}"
+STAGING_DIR="${TMP_DIR}/package"
+echo "Downloading release package..."
+curl -fL --retry 3 --connect-timeout 15 --max-time 600 -o "${ARCHIVE_PATH}" "${DOWNLOAD_URL}"
+
+if ! tar -tzf "${ARCHIVE_PATH}" > "${TMP_DIR}/archive-files.txt"; then
+    echo -e "${RED}The downloaded release package is not a valid tar.gz archive.${RESET}"
+    exit 1
+fi
+if ! grep -Eq '(^|/)ClamAVGui\.App$' "${TMP_DIR}/archive-files.txt"; then
+    echo -e "${RED}The release package does not contain the ClamAVGui.App executable.${RESET}"
+    exit 1
+fi
+mkdir -p "${STAGING_DIR}"
+tar -xzf "${ARCHIVE_PATH}" -C "${STAGING_DIR}"
+chmod +x "${STAGING_DIR}/ClamAVGui.App"
 
 # 5. Determine installation paths
 INSTALL_DIR="${HOME}/.local/share/clamav-gui"
@@ -81,9 +96,15 @@ BIN_DIR="${HOME}/.local/bin"
 mkdir -p "${INSTALL_DIR}"
 mkdir -p "${BIN_DIR}"
 
-echo -e "Extracting files to ${INSTALL_DIR}..."
-tar -xzf "${ARCHIVE_PATH}" -C "${INSTALL_DIR}"
+echo -e "Installing files to ${INSTALL_DIR}..."
+# The app stores its settings and scan history here too, so merge validated
+# application files without deleting the user's existing data.
+cp -a "${STAGING_DIR}/." "${INSTALL_DIR}/"
 chmod +x "${INSTALL_DIR}/ClamAVGui.App"
+if [ ! -x "${INSTALL_DIR}/ClamAVGui.App" ]; then
+    echo -e "${RED}The application executable is missing or not executable after installation.${RESET}"
+    exit 1
+fi
 
 # 6. Create binary symlink
 ln -sf "${INSTALL_DIR}/ClamAVGui.App" "${BIN_DIR}/clamav-gui"

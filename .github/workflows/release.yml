@@ -46,14 +46,35 @@ jobs:
           --self-contained true
           --output ./publish/${{ matrix.rid }}
 
+      - name: Install virtual X server
+        if: matrix.rid == 'linux-x64'
+        run: sudo apt-get update && sudo apt-get install --yes xvfb
+
+      - name: Smoke-test Linux desktop startup
+        if: matrix.rid == 'linux-x64'
+        shell: bash
+        run: |
+          set +e
+          timeout --signal=TERM 15s xvfb-run -a ./publish/linux-x64/ClamAVGui.App
+          app_status=$?
+          set -e
+          if [ "$app_status" -ne 124 ]; then
+            echo "Linux GUI exited before the startup smoke-test timeout (exit $app_status)."
+            exit 1
+          fi
+
       - name: Package archive
         shell: bash
         run: |
           asset="ClamAV-GUI-${GITHUB_REF_NAME}-${{ matrix.rid }}.${{ matrix.archive }}"
           if [ "${{ matrix.archive }}" = "zip" ]; then
             (cd "./publish/${{ matrix.rid }}" && zip -q -r "../../${asset}" .)
+            unzip -Z1 "${asset}" > archive-files.txt
+            grep -Fx "ClamAVGui.App.exe" archive-files.txt
           else
             tar -czf "${asset}" -C "./publish/${{ matrix.rid }}" .
+            tar -tzf "${asset}" > archive-files.txt
+            grep -E '(^|/)ClamAVGui\.App$' archive-files.txt
           fi
 
       - name: Upload release package
@@ -85,3 +106,30 @@ jobs:
           else
             gh release create "$RELEASE_TAG" release-assets/* --generate-notes
           fi
+
+  windows-installer-smoke:
+    name: Install and launch on Windows
+    needs: publish
+    runs-on: windows-latest
+    steps:
+      - name: Checkout tagged installer
+        uses: actions/checkout@v4
+
+      - name: Install from the published release
+        shell: powershell
+        run: .\install.ps1
+
+      - name: Verify and launch installed app
+        shell: powershell
+        run: |
+          $ExePath = Join-Path $env:LOCALAPPDATA "ClamAV-GUI\ClamAVGui.App.exe"
+          if (-not (Test-Path -LiteralPath $ExePath -PathType Leaf)) {
+            throw "Installer did not place ClamAVGui.App.exe at $ExePath"
+          }
+          $App = Start-Process -FilePath $ExePath -PassThru
+          Start-Sleep -Seconds 10
+          $App.Refresh()
+          if ($App.HasExited) {
+            throw "Installed application exited during startup with code $($App.ExitCode)."
+          }
+          Stop-Process -Id $App.Id -Force
