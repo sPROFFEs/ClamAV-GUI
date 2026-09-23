@@ -12,38 +12,32 @@
         <!-- Collapsible Sidebar Navigation -->
         <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0"
-                Width="{Binding IsSidebarExpanded, Converter={StaticResource NullToBoolConverter}, FallbackValue=260}">
-            <Border.Styles>
-                <Style Selector="Border[Width=260]">
-                    <Setter Property="Width" Value="260"/>
-                </Style>
-            </Border.Styles>
+                Width="{Binding SidebarWidth}" ClipToBounds="True">
             <Grid RowDefinitions="Auto,*,Auto">
                 <!-- App Title and Hamburger Toggle -->
-                <Border Grid.Row="0" Margin="16,20,16,14">
+                <Border Grid.Row="0" Margin="14,18,14,14">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <PathIcon Grid.Column="0" Data="{StaticResource IconShieldCheck}" Width="24" Height="24" Foreground="#107C10" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <PathIcon Grid.Column="0" Data="{StaticResource IconShieldCheck}" Width="24" Height="24" Foreground="#107C10" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center" IsVisible="{Binding IsSidebarExpanded}">
-                            <TextBlock Text="ClamAV Security" FontWeight="SemiBold" FontSize="15"/>
+                            <TextBlock Text="ClamAV Security" FontWeight="SemiBold" FontSize="14"/>
                             <TextBlock Text="Endpoint Protection" FontSize="11" Opacity="0.6"/>
                         </StackPanel>
                         <Button Grid.Column="2" Classes="defender-secondary" Content="☰" Command="{Binding ToggleSidebarCommand}"
-                                Padding="8,4" FontSize="13" VerticalAlignment="Center"/>
+                                Padding="8,4" FontSize="12" VerticalAlignment="Center"/>
                     </Grid>
                 </Border>
 
                 <!-- Navigation List -->
                 <ScrollViewer Grid.Row="1">
                     <ListBox ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
-                             Background="Transparent" SelectionMode="Single" Margin="6,0">
+                             Background="Transparent" SelectionMode="Single" Margin="4,0">
                         <ListBox.ItemTemplate>
                             <DataTemplate x:DataType="vm:NavItem">
                                 <Grid ColumnDefinitions="28,*" Margin="4,3">
-                                    <PathIcon Grid.Column="0" Data="{Binding IconResourceKey, Converter={StaticResource ResourceNameToGeometryConverter}}"
+                                    <PathIcon Grid.Column="0" Data="{Binding IconGeometry}"
                                               Width="16" Height="16" Opacity="0.85" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" Margin="6,0,0,0"
-                                               IsVisible="{Binding $parent[views:MainWindow].((vm:MainViewModel)DataContext).IsSidebarExpanded, x:CompileBindings=False}"/>
+                                               TextTrimming="CharacterEllipsis" Margin="6,0,0,0"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
