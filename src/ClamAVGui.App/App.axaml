@@ -5,6 +5,7 @@
              RequestedThemeVariant="Default">
     <Application.Resources>
         <!-- Converters -->
+        <converters:ResourceNameToGeometryConverter x:Key="ResourceNameToGeometryConverter"/>
         <converters:NullToBoolConverter x:Key="NullToBoolConverter"/>
         <converters:InvertBoolConverter x:Key="InvertBoolConverter"/>
         <converters:InfectedToBrushConverter x:Key="InfectedToBrushConverter"/>

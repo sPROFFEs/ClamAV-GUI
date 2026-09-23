@@ -50,17 +50,15 @@ esac
 # 3. Find latest release asset URL
 echo -e "Detecting latest release for ${BOLD}${OS_TAG}-${ARCH_TAG}${RESET}..."
 
-RELEASE_JSON=$(curl -fsSL --retry 3 --connect-timeout 15 --max-time 60 \
+RELEASE_JSON=$(curl -sSL --retry 3 --connect-timeout 15 --max-time 60 \
+    -H "User-Agent: ClamAV-GUI-Installer" \
     -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    "${GITHUB_API}?per_page=20")
+    "${GITHUB_API}?per_page=20" 2>/dev/null || true)
 
 DOWNLOAD_URL=$(echo "${RELEASE_JSON}" | grep -oE "https://github.com/${REPO}/releases/download/[^\" ]*${OS_TAG}-${ARCH_TAG}\\.tar\\.gz" | head -n 1 || true)
 
 if [ -z "${DOWNLOAD_URL}" ]; then
-    echo -e "${RED}No release asset found for ${OS_TAG}-${ARCH_TAG}.${RESET}"
-    echo "Check the available downloads at https://github.com/${REPO}/releases"
-    exit 1
+    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v2.0.0-beta.1/ClamAV-GUI-v2.0.0-beta-${OS_TAG}-${ARCH_TAG}.tar.gz"
 fi
 
 echo -e "Downloading from: ${BLUE}${DOWNLOAD_URL}${RESET}"
