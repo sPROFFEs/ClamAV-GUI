@@ -122,9 +122,12 @@ public partial class App : Application
         services.AddSingleton<IQuarantineService>(sp =>
         {
             var platform = sp.GetRequiredService<IPlatformService>();
-            var settings = sp.GetRequiredService<ISettingsService>().LoadSettingsAsync().GetAwaiter().GetResult();
-            var dir = settings.CustomQuarantinePath ?? Path.Combine(platform.UserDataDirectory, "Quarantine");
-            return new QuarantineService(dir);
+            var settingsService = sp.GetRequiredService<ISettingsService>();
+            return new QuarantineService(async () =>
+            {
+                var settings = await settingsService.LoadSettingsAsync();
+                return settings.CustomQuarantinePath ?? Path.Combine(platform.UserDataDirectory, "Quarantine");
+            });
         });
 
         // Protocol and transports
@@ -150,11 +153,11 @@ public partial class App : Application
                     var s = await settingsService.LoadSettingsAsync();
                     return await binaryLocator.FindInstallationAsync(s.CustomClamAvPath);
                 },
-                () =>
+                async () =>
                 {
-                    var s = settingsService.LoadSettingsAsync().GetAwaiter().GetResult();
-                    var inst = binaryLocator.FindInstallationAsync(s.CustomClamAvPath).GetAwaiter().GetResult();
-                    var cfg = configProvider.LoadAsync(inst).GetAwaiter().GetResult();
+                    var s = await settingsService.LoadSettingsAsync();
+                    var inst = await binaryLocator.FindInstallationAsync(s.CustomClamAvPath);
+                    var cfg = await configProvider.LoadAsync(inst);
                     return cfg.DaemonEndpoint ?? (platform.Platform == PlatformKind.Windows
                         ? new TcpClamdEndpoint("127.0.0.1", 3310)
                         : new UnixClamdEndpoint(Path.Combine(platform.RuntimeDirectory, "clamd.ctl")));
@@ -195,11 +198,11 @@ public partial class App : Application
             var locator = sp.GetRequiredService<IClamAvBinaryLocator>();
             var settings = sp.GetRequiredService<ISettingsService>();
             var parser = sp.GetRequiredService<IClamAvOutputParser>();
-            return new ClamdBackend(protocol, () =>
+            return new ClamdBackend(protocol, async () =>
             {
-                var s = settings.LoadSettingsAsync().GetAwaiter().GetResult();
-                var inst = locator.FindInstallationAsync(s.CustomClamAvPath).GetAwaiter().GetResult();
-                var cfg = configProvider.LoadAsync(inst).GetAwaiter().GetResult();
+                var s = await settings.LoadSettingsAsync();
+                var inst = await locator.FindInstallationAsync(s.CustomClamAvPath);
+                var cfg = await configProvider.LoadAsync(inst);
                 return cfg.DaemonEndpoint;
             }, parser);
         });

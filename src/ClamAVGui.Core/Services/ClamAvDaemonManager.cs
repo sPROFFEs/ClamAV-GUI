@@ -11,7 +11,7 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 {
     private readonly IClamdProtocol _protocol;
     private readonly Func<Task<ClamAvInstallation?>> _installationProvider;
-    private readonly Func<ClamdEndpoint> _endpointResolver;
+    private readonly Func<Task<ClamdEndpoint>> _endpointResolver;
     private readonly ILogger<ClamAvDaemonManager> _logger;
     private readonly object _lock = new();
 
@@ -32,7 +32,7 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
     public ClamAvDaemonManager(
         IClamdProtocol protocol,
         Func<Task<ClamAvInstallation?>> installationProvider,
-        Func<ClamdEndpoint> endpointResolver,
+        Func<Task<ClamdEndpoint>> endpointResolver,
         ILogger<ClamAvDaemonManager>? logger = null)
     {
         _protocol = protocol;
@@ -43,7 +43,24 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
     public async Task<ClamdHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        var endpoint = _endpointResolver();
+        ClamdEndpoint endpoint;
+        try
+        {
+            endpoint = await _endpointResolver();
+        }
+        catch (Exception ex)
+        {
+            return new ClamdHealth
+            {
+                ProcessExists = false,
+                EndpointReachable = false,
+                ProtocolHealthy = false,
+                DatabaseLoaded = false,
+                OwnedByApplication = false,
+                Error = ex.Message
+            };
+        }
+
         bool isOwned;
         int? pid;
 
@@ -249,7 +266,7 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
     public async Task<string> ReloadDatabaseAsync(CancellationToken cancellationToken = default)
     {
-        var endpoint = _endpointResolver();
+        var endpoint = await _endpointResolver();
         return await _protocol.ReloadAsync(endpoint, TimeSpan.FromSeconds(5), cancellationToken);
     }
 }

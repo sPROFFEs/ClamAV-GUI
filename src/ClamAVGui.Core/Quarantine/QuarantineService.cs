@@ -10,19 +10,31 @@ namespace ClamAVGui.Core.Quarantine;
 
 public sealed class QuarantineService : IQuarantineService
 {
-    private readonly string _quarantineDirectory;
-    private readonly string _metadataFilePath;
+    private readonly Func<Task<string>> _directoryProvider;
     private readonly SemaphoreSlim _lock = new(1, 1);
     private readonly ILogger<QuarantineService> _logger;
 
     public QuarantineService(
-        string quarantineDirectory,
+        string defaultQuarantineDirectory,
+        ILogger<QuarantineService>? logger = null)
+        : this(() => Task.FromResult(defaultQuarantineDirectory), logger)
+    {
+    }
+
+    public QuarantineService(
+        Func<Task<string>> directoryProvider,
         ILogger<QuarantineService>? logger = null)
     {
-        _quarantineDirectory = quarantineDirectory;
-        Directory.CreateDirectory(_quarantineDirectory);
-        _metadataFilePath = Path.Combine(_quarantineDirectory, "quarantine.json");
+        _directoryProvider = directoryProvider;
         _logger = logger ?? NullLogger<QuarantineService>.Instance;
+    }
+
+    private async Task<(string Dir, string MetaFile)> GetPathsAsync()
+    {
+        var dir = await _directoryProvider();
+        Directory.CreateDirectory(dir);
+        var meta = Path.Combine(dir, "quarantine.json");
+        return (dir, meta);
     }
 
     public async Task<IReadOnlyList<QuarantineItem>> LoadItemsAsync(CancellationToken cancellationToken = default)
@@ -30,7 +42,8 @@ public sealed class QuarantineService : IQuarantineService
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            return await LoadInternalAsync(cancellationToken);
+            var (_, metaFile) = await GetPathsAsync();
+            return await LoadInternalAsync(metaFile, cancellationToken);
         }
         finally
         {
@@ -49,9 +62,10 @@ public sealed class QuarantineService : IQuarantineService
             throw new FileNotFoundException("File to quarantine does not exist.", sourcePath);
         }
 
+        var (dir, metaFile) = await GetPathsAsync();
         var id = Guid.NewGuid();
         var destinationFileName = $"{id:N}.quarantine";
-        var destinationPath = Path.Combine(_quarantineDirectory, destinationFileName);
+        var destinationPath = Path.Combine(dir, destinationFileName);
 
         long size;
         string sha256;
@@ -64,7 +78,6 @@ public sealed class QuarantineService : IQuarantineService
             sha256 = Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
 
-        // Copy/move file
         try
         {
             File.Move(sourcePath, destinationPath, overwrite: true);
@@ -97,9 +110,9 @@ public sealed class QuarantineService : IQuarantineService
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            var items = (await LoadInternalAsync(cancellationToken)).ToList();
+            var items = (await LoadInternalAsync(metaFile, cancellationToken)).ToList();
             items.Insert(0, item);
-            await SaveInternalAsync(items, cancellationToken);
+            await SaveInternalAsync(metaFile, items, cancellationToken);
         }
         finally
         {
@@ -114,7 +127,8 @@ public sealed class QuarantineService : IQuarantineService
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            var items = (await LoadInternalAsync(cancellationToken)).ToList();
+            var (_, metaFile) = await GetPathsAsync();
+            var items = (await LoadInternalAsync(metaFile, cancellationToken)).ToList();
             var item = items.FirstOrDefault(i => i.Id == id);
             if (item == null)
             {
@@ -148,7 +162,7 @@ public sealed class QuarantineService : IQuarantineService
             File.Move(item.QuarantinePath, dest, overwrite: true);
 
             items.Remove(item);
-            await SaveInternalAsync(items, cancellationToken);
+            await SaveInternalAsync(metaFile, items, cancellationToken);
         }
         finally
         {
@@ -161,7 +175,8 @@ public sealed class QuarantineService : IQuarantineService
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            var items = (await LoadInternalAsync(cancellationToken)).ToList();
+            var (_, metaFile) = await GetPathsAsync();
+            var items = (await LoadInternalAsync(metaFile, cancellationToken)).ToList();
             var item = items.FirstOrDefault(i => i.Id == id);
             if (item != null)
             {
@@ -178,7 +193,7 @@ public sealed class QuarantineService : IQuarantineService
                 }
 
                 items.Remove(item);
-                await SaveInternalAsync(items, cancellationToken);
+                await SaveInternalAsync(metaFile, items, cancellationToken);
             }
         }
         finally
@@ -192,11 +207,12 @@ public sealed class QuarantineService : IQuarantineService
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            var items = await LoadInternalAsync(cancellationToken);
+            var (_, metaFile) = await GetPathsAsync();
+            var items = await LoadInternalAsync(metaFile, cancellationToken);
             var existing = items.Where(i => File.Exists(i.QuarantinePath)).ToList();
             if (existing.Count != items.Count)
             {
-                await SaveInternalAsync(existing, cancellationToken);
+                await SaveInternalAsync(metaFile, existing, cancellationToken);
             }
         }
         finally
@@ -205,16 +221,16 @@ public sealed class QuarantineService : IQuarantineService
         }
     }
 
-    private async Task<List<QuarantineItem>> LoadInternalAsync(CancellationToken cancellationToken)
+    private static async Task<List<QuarantineItem>> LoadInternalAsync(string metaFile, CancellationToken cancellationToken)
     {
-        if (!File.Exists(_metadataFilePath))
+        if (!File.Exists(metaFile))
         {
             return new List<QuarantineItem>();
         }
 
         try
         {
-            var json = await File.ReadAllTextAsync(_metadataFilePath, cancellationToken);
+            var json = await File.ReadAllTextAsync(metaFile, cancellationToken);
             return JsonSerializer.Deserialize<List<QuarantineItem>>(json) ?? new List<QuarantineItem>();
         }
         catch
@@ -223,11 +239,11 @@ public sealed class QuarantineService : IQuarantineService
         }
     }
 
-    private async Task SaveInternalAsync(List<QuarantineItem> items, CancellationToken cancellationToken)
+    private static async Task SaveInternalAsync(string metaFile, List<QuarantineItem> items, CancellationToken cancellationToken)
     {
         var json = JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true });
-        var temp = _metadataFilePath + ".tmp." + Guid.NewGuid().ToString("N");
+        var temp = metaFile + ".tmp." + Guid.NewGuid().ToString("N");
         await File.WriteAllTextAsync(temp, json, cancellationToken);
-        File.Move(temp, _metadataFilePath, overwrite: true);
+        File.Move(temp, metaFile, overwrite: true);
     }
 }

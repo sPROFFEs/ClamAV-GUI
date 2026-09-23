@@ -15,7 +15,7 @@ public class DaemonOwnershipTests
         var manager = new ClamAvDaemonManager(
             protocolMock.Object,
             () => Task.FromResult<ClamAvInstallation?>(null),
-            () => new TcpClamdEndpoint("127.0.0.1", 3310));
+            () => Task.FromResult<ClamdEndpoint>(new TcpClamdEndpoint("127.0.0.1", 3310)));
 
         // Attempting to stop when unmanaged / external
         await manager.StopAsync();

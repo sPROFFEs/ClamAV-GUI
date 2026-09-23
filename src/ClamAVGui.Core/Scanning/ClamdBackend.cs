@@ -8,7 +8,7 @@ namespace ClamAVGui.Core.Scanning;
 public sealed class ClamdBackend : IScanBackend
 {
     private readonly IClamdProtocol _protocol;
-    private readonly Func<ClamdEndpoint?> _endpointProvider;
+    private readonly Func<Task<ClamdEndpoint?>> _endpointProvider;
     private readonly IClamAvOutputParser _outputParser;
 
     public ScanBackendKind Kind => ScanBackendKind.ClamD;
@@ -24,7 +24,7 @@ public sealed class ClamdBackend : IScanBackend
 
     public ClamdBackend(
         IClamdProtocol protocol,
-        Func<ClamdEndpoint?> endpointProvider,
+        Func<Task<ClamdEndpoint?>> endpointProvider,
         IClamAvOutputParser outputParser)
     {
         _protocol = protocol;
@@ -34,11 +34,11 @@ public sealed class ClamdBackend : IScanBackend
 
     public async Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
-        var endpoint = _endpointProvider();
-        if (endpoint == null) return false;
-
         try
         {
+            var endpoint = await _endpointProvider();
+            if (endpoint == null) return false;
+
             var ping = await _protocol.PingAsync(endpoint, TimeSpan.FromSeconds(2), cancellationToken);
             return ping.Contains("PONG", StringComparison.OrdinalIgnoreCase);
         }
@@ -53,7 +53,7 @@ public sealed class ClamdBackend : IScanBackend
         IProgress<ScanProgress>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        var endpoint = _endpointProvider();
+        var endpoint = await _endpointProvider();
         if (endpoint == null)
         {
             throw new ClamAvException(ClamAvErrorCode.DaemonUnavailable, "No clamd endpoint is currently configured or available.");
