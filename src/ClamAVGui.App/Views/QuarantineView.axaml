@@ -1,7 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ClamAVGui.App.ViewModels"
-             xmlns:views="using:ClamAVGui.App.Views"
              xmlns:models="using:ClamAVGui.Core.Models"
              x:Class="ClamAVGui.App.Views.QuarantineView"
              x:DataType="vm:QuarantineViewModel">
@@ -9,22 +8,22 @@
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
             <!-- Header -->
             <StackPanel Spacing="4">
-                <TextBlock Text="Quarantined threats" FontSize="26" FontWeight="SemiBold"/>
-                <TextBlock Text="Threats that have been quarantined and prevented from running on your device." FontSize="13" Opacity="0.7"/>
+                <TextBlock Text="Quarantine Vault" FontSize="26" FontWeight="Bold"/>
+                <TextBlock Text="Isolated malicious files tracked with SHA-256 integrity verification." FontSize="13" Opacity="0.7"/>
             </StackPanel>
 
             <!-- Actions Bar -->
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <Button Classes="defender-secondary" Content="Refresh quarantine" Command="{Binding LoadCommand}"/>
+                <Button Classes="clamav-secondary" Content="Refresh Vault" Command="{Binding LoadCommand}"/>
             </StackPanel>
 
             <!-- Quarantine Table -->
-            <Border Classes="defender-card" Padding="0" MinHeight="250">
+            <Border Classes="clamav-card" Padding="0" MinHeight="250">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
                         <Grid ColumnDefinitions="*,180,100,160,Auto">
-                            <TextBlock Grid.Column="0" Text="Detected item &amp; threat" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
-                            <TextBlock Grid.Column="1" Text="Date quarantined" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                            <TextBlock Grid.Column="0" Text="Detected Item &amp; Threat" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                            <TextBlock Grid.Column="1" Text="Date Quarantined" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                             <TextBlock Grid.Column="2" Text="Size" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                             <TextBlock Grid.Column="3" Text="Integrity SHA-256" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                             <TextBlock Grid.Column="4" Text="Actions" FontWeight="SemiBold" FontSize="12" Opacity="0.8" Margin="10,0"/>
@@ -32,7 +31,7 @@
                     </Border>
 
                     <!-- Empty State -->
-                    <TextBlock Text="No quarantined threats. Your quarantine vault is clean."
+                    <TextBlock Text="No quarantined threats. Your quarantine vault is empty."
                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                Opacity="0.5" FontSize="13" Margin="30"
                                IsVisible="{Binding !Items.Count}"/>
@@ -43,21 +42,19 @@
                                 <Grid ColumnDefinitions="*,180,100,160,Auto" Margin="8,6">
                                     <StackPanel Grid.Column="0" Spacing="2">
                                         <TextBlock Text="{Binding OriginalPath}" FontWeight="SemiBold" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                        <TextBlock Text="{Binding ThreatName, StringFormat='Threat: {0}'}" Foreground="#C42B1C" FontSize="11" FontWeight="SemiBold"/>
+                                        <TextBlock Text="{Binding ThreatName, StringFormat='Threat: {0}'}" Foreground="#EF4444" FontSize="11" FontWeight="SemiBold"/>
                                     </StackPanel>
                                     <TextBlock Grid.Column="1" Text="{Binding QuarantinedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Opacity="0.75" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="2" Text="{Binding FileSizeBytes, Converter={StaticResource FileSizeConverter}}" Opacity="0.8" FontSize="12" VerticalAlignment="Center"/>
                                     <TextBlock Grid.Column="3" Text="{Binding FileHashSha256}" TextTrimming="CharacterEllipsis" FontFamily="Monospace" FontSize="11" Opacity="0.6" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="10,0,0,0">
-                                        <Button Classes="defender-secondary" Content="Restore"
-                                                Command="{Binding $parent[views:QuarantineView].DataContext.RestoreItemCommand}"
-                                                CommandParameter="{Binding}"
-                                                x:CompileBindings="False"
+                                        <Button Classes="clamav-secondary" Content="Restore"
+                                                Click="OnRestoreClick"
+                                                Tag="{Binding}"
                                                 Padding="10,4" FontSize="11"/>
-                                        <Button Classes="defender-danger" Content="Remove"
-                                                Command="{Binding $parent[views:QuarantineView].DataContext.DeleteItemCommand}"
-                                                CommandParameter="{Binding}"
-                                                x:CompileBindings="False"
+                                        <Button Classes="clamav-danger" Content="Remove"
+                                                Click="OnDeleteClick"
+                                                Tag="{Binding}"
                                                 Padding="10,4" FontSize="11"/>
                                     </StackPanel>
                                 </Grid>

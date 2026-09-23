@@ -7,36 +7,36 @@
         <StackPanel Spacing="24" MaxWidth="850" HorizontalAlignment="Left">
             <!-- Header -->
             <StackPanel Spacing="4">
-                <TextBlock Text="Automated scan scheduler" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock Text="Automated Scan Scheduler" FontSize="26" FontWeight="Bold"/>
                 <TextBlock Text="Schedule background scans to run automatically on your device at set intervals." FontSize="13" Opacity="0.7"/>
             </StackPanel>
 
             <!-- Configuration Card -->
-            <Border Classes="defender-card">
+            <Border Classes="clamav-card">
                 <StackPanel Spacing="16">
-                    <TextBlock Text="Daily background scan" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Text="Daily Background Scan" FontWeight="SemiBold" FontSize="16"/>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Target folder to scan" FontSize="12" Opacity="0.8"/>
+                        <TextBlock Text="Target Directory to Scan" FontSize="12" Opacity="0.8"/>
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0" Text="{Binding ScheduledScanPath}" Watermark="Select a directory to scan daily..." Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Classes="defender-secondary" Content="Browse..." Command="{Binding BrowsePathCommand}"/>
+                            <Button Grid.Column="1" Classes="clamav-secondary" Content="Browse..." Command="{Binding BrowsePathCommand}"/>
                         </Grid>
                     </StackPanel>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Scheduled time (24h format, e.g. 02:00)" FontSize="12" Opacity="0.8"/>
+                        <TextBlock Text="Scheduled Time (24h format, e.g. 02:00)" FontSize="12" Opacity="0.8"/>
                         <TextBox Text="{Binding ScheduledScanTime}" MaxWidth="160" HorizontalAlignment="Left"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,8,0,0">
-                        <Button Classes="defender-primary" Content="Save and enable daily scan" Command="{Binding SaveScheduleCommand}"/>
-                        <Button Classes="defender-danger" Content="Disable schedule" Command="{Binding RemoveScheduleCommand}"/>
+                        <Button Classes="clamav-primary" Content="💾 Save &amp; Enable Daily Scan" Command="{Binding SaveScheduleCommand}"/>
+                        <Button Classes="clamav-danger" Content="✕ Disable Schedule" Command="{Binding RemoveScheduleCommand}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Classes="defender-card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
+            <Border Classes="clamav-card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
                 <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13"/>
             </Border>
         </StackPanel>

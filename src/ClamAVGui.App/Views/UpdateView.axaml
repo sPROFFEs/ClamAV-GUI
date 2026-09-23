@@ -7,30 +7,30 @@
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
             <!-- Header -->
             <StackPanel Spacing="4">
-                <TextBlock Text="Security intelligence updates" FontSize="26" FontWeight="SemiBold"/>
-                <TextBlock Text="Security intelligence is used to identify threats and protect your device against the latest malware." FontSize="13" Opacity="0.7"/>
+                <TextBlock Text="Signature Intelligence Updates" FontSize="26" FontWeight="Bold"/>
+                <TextBlock Text="Download latest threat signatures and heuristics database using freshclam." FontSize="13" Opacity="0.7"/>
             </StackPanel>
 
             <!-- Intelligence Overview Card -->
-            <Border Classes="defender-card">
+            <Border Classes="clamav-card">
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
-                    <PathIcon Grid.Column="0" Grid.RowSpan="3" Data="{StaticResource IconUpdates}" Width="40" Height="40" Foreground="#0067C0" VerticalAlignment="Center" Margin="0,0,20,0"/>
+                    <PathIcon Grid.Column="0" Grid.RowSpan="3" Data="{StaticResource IconUpdates}" Width="40" Height="40" Foreground="#C41E3A" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Virus and spyware definition status" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Virus Database &amp; Signatures Status" FontWeight="SemiBold" FontSize="16"/>
                     <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding StatusText}" FontSize="13" Opacity="0.75" Margin="0,4,0,12"/>
 
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="12">
-                        <Button Classes="defender-primary" Content="Check for updates" Command="{Binding UpdateSignaturesCommand}" IsEnabled="{Binding !IsUpdating}"/>
-                        <Button Classes="defender-danger" Content="Cancel update" Command="{Binding CancelUpdateCommand}" IsVisible="{Binding IsUpdating}"/>
+                        <Button Classes="clamav-primary" Content="🔄 Check for Updates" Command="{Binding UpdateSignaturesCommand}" IsEnabled="{Binding !IsUpdating}"/>
+                        <Button Classes="clamav-danger" Content="Cancel Update" Command="{Binding CancelUpdateCommand}" IsVisible="{Binding IsUpdating}"/>
                     </StackPanel>
                 </Grid>
             </Border>
 
             <!-- Log Output Terminal -->
-            <Border Classes="defender-card" Padding="0">
+            <Border Classes="clamav-card" Padding="0">
                 <DockPanel>
                     <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
-                        <TextBlock Text="Update process logs (freshclam)" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                        <TextBlock Text="freshclam Update Output" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                     </Border>
                     <ScrollViewer MaxHeight="300" Margin="16">
                         <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>

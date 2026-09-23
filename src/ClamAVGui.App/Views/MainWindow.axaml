@@ -4,109 +4,122 @@
         xmlns:views="using:ClamAVGui.App.Views"
         x:Class="ClamAVGui.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="ClamAV Endpoint Security Suite" Width="1180" Height="800"
+        Title="ClamAV Antivirus Suite" Width="1180" Height="800"
         MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen">
 
-    <Grid ColumnDefinitions="Auto,*" RowDefinitions="*">
-        <!-- Collapsible Sidebar Navigation -->
-        <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
-                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0"
-                Width="{Binding SidebarWidth}" ClipToBounds="True">
-            <Grid RowDefinitions="Auto,*,Auto">
-                <!-- App Title and Hamburger Toggle -->
-                <Border Grid.Row="0" Margin="14,18,14,14">
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <PathIcon Grid.Column="0" Data="{StaticResource IconShieldCheck}" Width="24" Height="24" Foreground="#107C10" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" IsVisible="{Binding IsSidebarExpanded}">
-                            <TextBlock Text="ClamAV Security" FontWeight="SemiBold" FontSize="14"/>
-                            <TextBlock Text="Endpoint Protection" FontSize="11" Opacity="0.6"/>
-                        </StackPanel>
-                        <Button Grid.Column="2" Classes="defender-secondary" Content="☰" Command="{Binding ToggleSidebarCommand}"
-                                Padding="8,4" FontSize="12" VerticalAlignment="Center"/>
-                    </Grid>
-                </Border>
+    <Grid RowDefinitions="Auto,*">
+        <!-- Top Application Bar -->
+        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,0,1" Padding="12,10">
+            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                <!-- Toggle Sidebar Button -->
+                <Button Grid.Column="0" Classes="clamav-secondary" Content="☰" Command="{Binding ToggleSidebarCommand}"
+                        Padding="10,6" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
-                <!-- Navigation List -->
-                <ScrollViewer Grid.Row="1">
-                    <ListBox ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
-                             Background="Transparent" SelectionMode="Single" Margin="4,0">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate x:DataType="vm:NavItem">
-                                <Grid ColumnDefinitions="28,*" Margin="4,3">
-                                    <PathIcon Grid.Column="0" Data="{Binding IconGeometry}"
-                                              Width="16" Height="16" Opacity="0.85" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center"
-                                               TextTrimming="CharacterEllipsis" Margin="6,0,0,0"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </ScrollViewer>
+                <!-- ClamAV Logo & Brand Title -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <Image Source="avares://ClamAVGui.App/Assets/icon.png" Width="26" Height="26" VerticalAlignment="Center"/>
+                    <TextBlock Text="ClamAV" FontWeight="Bold" FontSize="16" Foreground="#C41E3A" VerticalAlignment="Center"/>
+                    <TextBlock Text="Security Suite" FontWeight="SemiBold" FontSize="14" Opacity="0.85" VerticalAlignment="Center"/>
+                </StackPanel>
 
-                <!-- Footer Status -->
-                <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                        CornerRadius="6" Margin="10,14" Padding="10" IsVisible="{Binding IsSidebarExpanded}">
-                    <StackPanel Spacing="3">
-                        <Grid ColumnDefinitions="Auto,*">
-                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="ClamAV Core Engine" FontSize="11" FontWeight="SemiBold" Opacity="0.8"/>
-                        </Grid>
-                        <TextBlock Text="{Binding Dashboard.StatusText}" FontSize="11" TextTrimming="CharacterEllipsis" Opacity="0.7"/>
+                <!-- Engine Status Pill in Header -->
+                <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                        CornerRadius="20" Padding="12,4" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Ellipse Width="8" Height="8" Fill="#10B981" VerticalAlignment="Center"/>
+                        <TextBlock Text="{Binding Dashboard.StatusText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <!-- Main Content Area -->
-        <Grid Grid.Column="1" RowDefinitions="Auto,*">
-            <!-- Toast Notification Banner -->
-            <Border Grid.Row="0" Background="#1E293B" Padding="14,10" Margin="24,16,24,0" CornerRadius="6"
-                    IsVisible="{Binding IsNotificationBannerVisible}">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Content="✕" Command="{Binding DismissBannerCommand}" Background="Transparent" Foreground="White" FontWeight="Bold" Padding="8,2" Margin="8,0,0,0"/>
+        <!-- Main Workspace Area -->
+        <Grid Grid.Row="1" ColumnDefinitions="Auto,*">
+            <!-- Collapsible Sidebar Navigation -->
+            <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                    BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0"
+                    Width="{Binding SidebarWidth}" ClipToBounds="True">
+                <Grid RowDefinitions="*,Auto">
+                    <!-- Navigation Items List -->
+                    <ScrollViewer Grid.Row="0" Margin="4,10">
+                        <ListBox ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
+                                 Background="Transparent" SelectionMode="Single">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="vm:NavItem">
+                                    <Grid ColumnDefinitions="32,*" Margin="4,4">
+                                        <PathIcon Grid.Column="0" Data="{Binding IconGeometry}"
+                                                  Width="18" Height="18" Foreground="#C41E3A" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis" Margin="4,0,0,0"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+
+                    <!-- Footer Info -->
+                    <Border Grid.Row="1" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                            Padding="12,10" IsVisible="{Binding IsSidebarExpanded}">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="ClamAV Open Source Engine" FontSize="11" FontWeight="SemiBold" Opacity="0.75"/>
+                            <TextBlock Text="{Binding Dashboard.VirusDefinitionsVersion, StringFormat='Database: {0}'}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </Border>
 
-            <!-- Active View Switcher -->
-            <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
-                <TabControl.Styles>
-                    <Style Selector="TabItem">
-                        <Setter Property="IsVisible" Value="False"/>
-                    </Style>
-                </TabControl.Styles>
-                <TabItem>
-                    <views:DashboardView DataContext="{Binding Dashboard}"/>
-                </TabItem>
-                <TabItem>
-                    <views:ScanView DataContext="{Binding Scan}"/>
-                </TabItem>
-                <TabItem>
-                    <views:UpdateView DataContext="{Binding Update}"/>
-                </TabItem>
-                <TabItem>
-                    <views:HistoryView DataContext="{Binding History}"/>
-                </TabItem>
-                <TabItem>
-                    <views:QuarantineView DataContext="{Binding Quarantine}"/>
-                </TabItem>
-                <TabItem>
-                    <views:DaemonView DataContext="{Binding Daemon}"/>
-                </TabItem>
-                <TabItem>
-                    <views:MonitoringView DataContext="{Binding Monitoring}"/>
-                </TabItem>
-                <TabItem>
-                    <views:SchedulerView DataContext="{Binding Scheduler}"/>
-                </TabItem>
-                <TabItem>
-                    <views:DiagnosticsView DataContext="{Binding Diagnostics}"/>
-                </TabItem>
-                <TabItem>
-                    <views:SettingsView DataContext="{Binding Settings}"/>
-                </TabItem>
-            </TabControl>
+            <!-- Main Page Content Area -->
+            <Grid Grid.Column="1" RowDefinitions="Auto,*">
+                <!-- Toast Notification Banner -->
+                <Border Grid.Row="0" Background="#1E293B" Padding="14,10" Margin="24,16,24,0" CornerRadius="6"
+                        IsVisible="{Binding IsNotificationBannerVisible}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" Content="✕" Command="{Binding DismissBannerCommand}" Background="Transparent" Foreground="White" FontWeight="Bold" Padding="8,2" Margin="8,0,0,0"/>
+                    </Grid>
+                </Border>
+
+                <!-- Active View Switcher -->
+                <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}">
+                    <TabControl.Styles>
+                        <Style Selector="TabItem">
+                            <Setter Property="IsVisible" Value="False"/>
+                        </Style>
+                    </TabControl.Styles>
+                    <TabItem>
+                        <views:DashboardView DataContext="{Binding Dashboard}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:ScanView DataContext="{Binding Scan}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:UpdateView DataContext="{Binding Update}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:HistoryView DataContext="{Binding History}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:QuarantineView DataContext="{Binding Quarantine}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:DaemonView DataContext="{Binding Daemon}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:MonitoringView DataContext="{Binding Monitoring}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:SchedulerView DataContext="{Binding Scheduler}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:DiagnosticsView DataContext="{Binding Diagnostics}"/>
+                    </TabItem>
+                    <TabItem>
+                        <views:SettingsView DataContext="{Binding Settings}"/>
+                    </TabItem>
+                </TabControl>
+            </Grid>
         </Grid>
     </Grid>
 </Window>
