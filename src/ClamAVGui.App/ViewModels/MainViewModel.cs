@@ -40,6 +40,9 @@ public sealed partial class MainViewModel : ViewModelBase
     private int _selectedTabIndex;
 
     [ObservableProperty]
+    private bool _isSidebarExpanded = true;
+
+    [ObservableProperty]
     private string _notificationBannerMessage = string.Empty;
 
     [ObservableProperty]
@@ -80,6 +83,12 @@ public sealed partial class MainViewModel : ViewModelBase
                 });
             };
         }
+    }
+
+    [RelayCommand]
+    public void ToggleSidebar()
+    {
+        IsSidebarExpanded = !IsSidebarExpanded;
     }
 
     [RelayCommand]

@@ -42,8 +42,17 @@ public sealed class AppUpdateService : IAppUpdateService
     {
         get
         {
-            var ver = Assembly.GetExecutingAssembly().GetName().Version;
-            return ver != null ? $"v{ver.Major}.{ver.Minor}.{ver.Build}" : "v2.0.0";
+            var infoVer = typeof(AppUpdateService).Assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            if (!string.IsNullOrWhiteSpace(infoVer))
+            {
+                var plusIdx = infoVer.IndexOf('+');
+                var ver = plusIdx > 0 ? infoVer[..plusIdx] : infoVer;
+                return ver.StartsWith('v') ? ver : $"v{ver}";
+            }
+
+            var verObj = Assembly.GetExecutingAssembly().GetName().Version;
+            return verObj != null ? $"v{verObj.Major}.{verObj.Minor}.{verObj.Build}" : "v2.0.0-beta.1";
         }
     }
 
@@ -71,7 +80,13 @@ public sealed class AppUpdateService : IAppUpdateService
             if (releases != null && releases.Count > 0)
             {
                 var latest = releases[0];
-                return latest;
+                var cur = CurrentVersion.Trim().TrimStart('v').ToLowerInvariant();
+                var tag = latest.TagName.Trim().TrimStart('v').ToLowerInvariant();
+
+                if (!string.Equals(cur, tag, StringComparison.OrdinalIgnoreCase))
+                {
+                    return latest;
+                }
             }
         }
         catch (Exception ex)

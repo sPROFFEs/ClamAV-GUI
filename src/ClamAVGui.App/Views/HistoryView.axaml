@@ -1,10 +1,10 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ClamAVGui.App.ViewModels"
+             xmlns:views="using:ClamAVGui.App.Views"
              xmlns:models="using:ClamAVGui.Core.Models"
              x:Class="ClamAVGui.App.Views.HistoryView"
-             x:DataType="vm:HistoryViewModel"
-             x:Name="RootHistoryView">
+             x:DataType="vm:HistoryViewModel">
     <ScrollViewer Margin="36,28">
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
             <!-- Header -->
@@ -52,8 +52,9 @@
                                     </Border>
                                     <TextBlock Grid.Column="2" Text="{Binding Details}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
                                     <Button Grid.Column="3" Classes="defender-secondary" Content="Delete"
-                                            Command="{Binding #RootHistoryView.((vm:HistoryViewModel)DataContext).DeleteEventCommand}"
+                                            Command="{Binding $parent[views:HistoryView].DataContext.DeleteEventCommand}"
                                             CommandParameter="{Binding}"
+                                            x:CompileBindings="False"
                                             Padding="8,4" FontSize="11" Margin="8,0,0,0"/>
                                 </Grid>
                             </DataTemplate>

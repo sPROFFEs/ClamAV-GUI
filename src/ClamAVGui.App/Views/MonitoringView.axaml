@@ -1,9 +1,9 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:ClamAVGui.App.ViewModels"
+             xmlns:views="using:ClamAVGui.App.Views"
              x:Class="ClamAVGui.App.Views.MonitoringView"
-             x:DataType="vm:MonitoringViewModel"
-             x:Name="RootMonitoringView">
+             x:DataType="vm:MonitoringViewModel">
     <ScrollViewer Margin="36,28">
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
             <!-- Header -->
@@ -47,8 +47,9 @@
                                     <Grid ColumnDefinitions="*,Auto" Margin="4,2">
                                         <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
                                         <Button Grid.Column="1" Classes="defender-secondary" Content="Remove"
-                                                Command="{Binding #RootMonitoringView.((vm:MonitoringViewModel)DataContext).RemoveMonitoredFolderCommand}"
+                                                Command="{Binding $parent[views:MonitoringView].DataContext.RemoveMonitoredFolderCommand}"
                                                 CommandParameter="{Binding}"
+                                                x:CompileBindings="False"
                                                 Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
@@ -72,8 +73,9 @@
                                     <Grid ColumnDefinitions="*,Auto" Margin="4,2">
                                         <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
                                         <Button Grid.Column="1" Classes="defender-secondary" Content="Remove"
-                                                Command="{Binding #RootMonitoringView.((vm:MonitoringViewModel)DataContext).RemoveExcludedFolderCommand}"
+                                                Command="{Binding $parent[views:MonitoringView].DataContext.RemoveExcludedFolderCommand}"
                                                 CommandParameter="{Binding}"
+                                                x:CompileBindings="False"
                                                 Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
