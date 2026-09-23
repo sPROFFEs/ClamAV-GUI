@@ -3,82 +3,102 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              x:Class="ClamAVGui.App.Views.MonitoringView"
              x:DataType="vm:MonitoringViewModel">
-    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,*">
-        <StackPanel Grid.Row="0" Spacing="6">
-            <TextBlock Text="Real-Time File Monitoring" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="Watches configured folders for file creation or modifications and automatically scans them." Opacity="0.7"/>
+    <ScrollViewer Margin="36,28">
+        <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Real-time protection" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock Text="Locates and stops malware from running or altering files on your device." FontSize="13" Opacity="0.7"/>
+            </StackPanel>
+
+            <!-- Toggle Banner -->
+            <Border Classes="defender-card">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="4" VerticalAlignment="Center">
+                        <TextBlock Text="Real-time file monitoring" FontWeight="SemiBold" FontSize="15"/>
+                        <TextBlock Text="Scans files on creation or modification inside watched directories." FontSize="12" Opacity="0.75"/>
+                    </StackPanel>
+                    <ToggleSwitch Grid.Column="1" IsChecked="{Binding IsMonitoringActive}" Command="{Binding ToggleMonitoringCommand}" VerticalAlignment="Center"/>
+                </Grid>
+            </Border>
+
+            <!-- Actions Bar -->
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <Button Classes="defender-secondary" Content="Add folder to monitor" Command="{Binding AddMonitoredFolderCommand}"/>
+                <Button Classes="defender-secondary" Content="Add exclusion" Command="{Binding AddExcludedFolderCommand}"/>
+                <Button Classes="defender-secondary" Content="Export activity log" Command="{Binding ExportLogCommand}"/>
+            </StackPanel>
+
+            <!-- Folders and Exclusions Grid -->
+            <Grid ColumnDefinitions="*,*">
+                <!-- Monitored Paths -->
+                <Border Grid.Column="0" Classes="defender-card" Padding="0" Margin="0,0,10,0" MinHeight="180">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
+                            <TextBlock Text="Monitored directories" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                        </Border>
+                        <TextBlock Text="No directories added. Click 'Add folder to monitor'."
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Opacity="0.5" FontSize="12" Margin="16" IsVisible="{Binding !MonitoredPaths.Count}"/>
+                        <ListBox ItemsSource="{Binding MonitoredPaths}" Background="Transparent" IsVisible="{Binding MonitoredPaths.Count}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto" Margin="4,2">
+                                        <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Classes="defender-secondary" Content="Remove"
+                                                Command="{Binding $parent[UserControl].((vm:MonitoringViewModel)DataContext).RemoveMonitoredFolderCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Excluded Paths -->
+                <Border Grid.Column="1" Classes="defender-card" Padding="0" Margin="10,0,0,0" MinHeight="180">
+                    <DockPanel>
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
+                            <TextBlock Text="Exclusions" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                        </Border>
+                        <TextBlock Text="No exclusion rules configured."
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Opacity="0.5" FontSize="12" Margin="16" IsVisible="{Binding !ExcludedPaths.Count}"/>
+                        <ListBox ItemsSource="{Binding ExcludedPaths}" Background="Transparent" IsVisible="{Binding ExcludedPaths.Count}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto" Margin="4,2">
+                                        <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
+                                        <Button Grid.Column="1" Classes="defender-secondary" Content="Remove"
+                                                Command="{Binding $parent[UserControl].((vm:MonitoringViewModel)DataContext).RemoveExcludedFolderCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <!-- Activity Stream -->
+            <Border Classes="defender-card" Padding="0" MinHeight="180">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
+                        <TextBlock Text="Live monitoring event stream" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                    </Border>
+                    <ScrollViewer MaxHeight="240" Margin="16">
+                        <ListBox ItemsSource="{Binding LogEntries}" Background="Transparent">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding}" FontFamily="Monospace" FontSize="11" Margin="0,2"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
         </StackPanel>
-
-        <!-- Action Controls -->
-        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,14">
-            <Button Classes="primary" Content="{Binding IsMonitoringActive, Converter={StaticResource InvertBoolConverter}}"
-                    Command="{Binding ToggleMonitoringCommand}" Margin="0,0,10,10" Padding="16,8"/>
-            <Button Content="📁 Add Monitored Folder" Command="{Binding AddMonitoredFolderCommand}" Margin="0,0,10,10" Padding="12,8"/>
-            <Button Content="🚫 Add Excluded Folder" Command="{Binding AddExcludedFolderCommand}" Margin="0,0,10,10" Padding="12,8"/>
-            <Button Content="📥 Export Activity Log" Command="{Binding ExportLogCommand}" Margin="0,0,10,10" Padding="12,8"/>
-        </WrapPanel>
-
-        <!-- Configuration Lists -->
-        <Grid Grid.Row="2" ColumnDefinitions="*,*" Margin="0,0,0,12">
-            <!-- Monitored Paths -->
-            <Border Grid.Column="0" Classes="card" Padding="10" Margin="0,0,6,0">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="Watched Folders" FontWeight="Bold" FontSize="13" Margin="4,0,0,8"/>
-                    <TextBlock Text="No folders added. Click 'Add Monitored Folder' above."
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Opacity="0.5" FontSize="12" IsVisible="{Binding !MonitoredPaths.Count}"/>
-                    <ListBox ItemsSource="{Binding MonitoredPaths}" Background="Transparent" IsVisible="{Binding MonitoredPaths.Count}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid ColumnDefinitions="*,Auto" Margin="0,2">
-                                    <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
-                                    <Button Grid.Column="1" Content="✕"
-                                            Command="{Binding $parent[UserControl].((vm:MonitoringViewModel)DataContext).RemoveMonitoredFolderCommand}"
-                                            CommandParameter="{Binding}"
-                                            Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-
-            <!-- Excluded Paths -->
-            <Border Grid.Column="1" Classes="card" Padding="10" Margin="6,0,0,0">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Top" Text="Excluded Paths" FontWeight="Bold" FontSize="13" Margin="4,0,0,8"/>
-                    <TextBlock Text="No exclusion rules configured."
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Opacity="0.5" FontSize="12" IsVisible="{Binding !ExcludedPaths.Count}"/>
-                    <ListBox ItemsSource="{Binding ExcludedPaths}" Background="Transparent" IsVisible="{Binding ExcludedPaths.Count}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <Grid ColumnDefinitions="*,Auto" Margin="0,2">
-                                    <TextBlock Grid.Column="0" Text="{Binding}" TextTrimming="CharacterEllipsis" FontSize="12" VerticalAlignment="Center"/>
-                                    <Button Grid.Column="1" Content="✕"
-                                            Command="{Binding $parent[UserControl].((vm:MonitoringViewModel)DataContext).RemoveExcludedFolderCommand}"
-                                            CommandParameter="{Binding}"
-                                            Padding="6,2" FontSize="10" Margin="6,0,0,0"/>
-                                </Grid>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </DockPanel>
-            </Border>
-        </Grid>
-
-        <!-- Live Activity Log -->
-        <Border Grid.Row="3" Classes="card" Padding="10">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="Live Monitoring Event Stream" FontWeight="Bold" FontSize="13" Margin="4,0,0,6"/>
-                <ListBox ItemsSource="{Binding LogEntries}" Background="Transparent">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}" FontFamily="Monospace" FontSize="11" Margin="0,2"/>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-        </Border>
-    </Grid>
+    </ScrollViewer>
 </UserControl>

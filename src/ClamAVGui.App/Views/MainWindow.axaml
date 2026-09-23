@@ -4,51 +4,49 @@
         xmlns:views="using:ClamAVGui.App.Views"
         x:Class="ClamAVGui.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="ClamAV Antivirus Suite" Width="1120" Height="780"
-        MinWidth="920" MinHeight="620"
+        Title="Windows Security — ClamAV Protection Suite" Width="1180" Height="800"
+        MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen">
 
-    <Grid ColumnDefinitions="250,*" RowDefinitions="*">
-        <!-- Sidebar Navigation -->
+    <Grid ColumnDefinitions="280,*" RowDefinitions="*">
+        <!-- Sidebar Navigation (Microsoft Defender Style) -->
         <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0">
             <Grid RowDefinitions="Auto,*,Auto">
-                <!-- App Logo & Title Header -->
-                <StackPanel Grid.Row="0" Margin="20,24,20,20" Spacing="10">
+                <!-- App Title Header -->
+                <StackPanel Grid.Row="0" Margin="20,24,20,16" Spacing="8">
                     <Grid ColumnDefinitions="Auto,*">
-                        <Border Grid.Column="0" Background="#1E88E5" CornerRadius="10" Width="40" Height="40" Margin="0,0,12,0">
-                            <TextBlock Text="🛡" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
+                        <PathIcon Grid.Column="0" Data="{StaticResource IconShieldCheck}" Width="26" Height="26" Foreground="#107C10" VerticalAlignment="Center" Margin="0,0,12,0"/>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="ClamAV Suite" FontWeight="Bold" FontSize="16"/>
-                            <TextBlock Text="Endpoint Protection" FontSize="11" Opacity="0.6"/>
+                            <TextBlock Text="Windows Security" FontWeight="SemiBold" FontSize="15"/>
+                            <TextBlock Text="ClamAV Antivirus Suite" FontSize="11" Opacity="0.6"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
 
-                <!-- Navigation Links List -->
+                <!-- Navigation List -->
                 <ScrollViewer Grid.Row="1">
                     <ListBox ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
                              Background="Transparent" SelectionMode="Single" Margin="8,0">
-                        <ListBox.Styles>
-                            <Style Selector="ListBoxItem">
-                                <Setter Property="CornerRadius" Value="6"/>
-                                <Setter Property="Padding" Value="14,10"/>
-                                <Setter Property="Margin" Value="0,2"/>
-                                <Setter Property="FontSize" Value="13"/>
-                                <Setter Property="FontWeight" Value="SemiBold"/>
-                            </Style>
-                        </ListBox.Styles>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:NavItem">
+                                <Grid ColumnDefinitions="28,*" Margin="4,2">
+                                    <PathIcon Grid.Column="0" Data="{Binding IconResourceKey, Converter={x:Null}}"
+                                              Width="16" Height="16" Opacity="0.8" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
                     </ListBox>
                 </ScrollViewer>
 
-                <!-- Sidebar Status Footer -->
+                <!-- Footer Status -->
                 <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
-                        CornerRadius="8" Margin="12,16" Padding="12">
+                        CornerRadius="6" Margin="12,16" Padding="12">
                     <StackPanel Spacing="4">
                         <Grid ColumnDefinitions="Auto,*">
-                            <Border Grid.Column="0" Background="#43A047" CornerRadius="5" Width="10" Height="10" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="1" Text="Engine Status" FontSize="11" FontWeight="Bold" Opacity="0.8"/>
+                            <Ellipse Grid.Column="0" Width="8" Height="8" Fill="#107C10" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Protection engine" FontSize="11" FontWeight="SemiBold" Opacity="0.8"/>
                         </Grid>
                         <TextBlock Text="{Binding Dashboard.StatusText}" FontSize="11" TextTrimming="CharacterEllipsis" Opacity="0.7"/>
                     </StackPanel>
@@ -59,10 +57,10 @@
         <!-- Main Content Area -->
         <Grid Grid.Column="1" RowDefinitions="Auto,*">
             <!-- Toast Notification Banner -->
-            <Border Grid.Row="0" Background="#263238" Padding="14,10" Margin="16,16,16,0" CornerRadius="8"
+            <Border Grid.Row="0" Background="#1E293B" Padding="14,10" Margin="24,16,24,0" CornerRadius="6"
                     IsVisible="{Binding IsNotificationBannerVisible}">
                 <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" Foreground="White" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" Content="✕" Command="{Binding DismissBannerCommand}" Background="Transparent" Foreground="White" FontWeight="Bold" Padding="8,2" Margin="8,0,0,0"/>
                 </Grid>
             </Border>

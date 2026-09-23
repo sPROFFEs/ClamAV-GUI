@@ -3,27 +3,28 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              x:Class="ClamAVGui.App.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
-    <ScrollViewer Margin="28,24">
-        <StackPanel Spacing="20" MaxWidth="850" HorizontalAlignment="Left">
-            <StackPanel Spacing="6">
-                <TextBlock Text="Settings &amp; Engine Management" FontSize="22" FontWeight="Bold"/>
-                <TextBlock Text="Install and configure ClamAV binaries, scanner heuristics, and system automation." Opacity="0.7"/>
+    <ScrollViewer Margin="36,28">
+        <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Virus &amp; threat protection settings" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock Text="Manage settings for ClamAV engine integration, real-time protection, and scanning behavior." FontSize="13" Opacity="0.7"/>
             </StackPanel>
 
-            <!-- ClamAV Installation Helper Card -->
-            <Border Classes="card" BorderBrush="#1E88E5" BorderThickness="1.5">
+            <!-- Card 1: Engine Installation Helper -->
+            <Border Classes="defender-card" BorderBrush="#0067C0" BorderThickness="1.5">
                 <StackPanel Spacing="12">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="4">
-                            <TextBlock Text="Install / Setup ClamAV Engine" FontWeight="Bold" FontSize="15"/>
-                            <TextBlock Text="Automatically install or configure the ClamAV backend on your system." FontSize="12" Opacity="0.75"/>
+                            <TextBlock Text="ClamAV engine installation" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="Install and set up the ClamAV antivirus backend automatically for your operating system." FontSize="12" Opacity="0.75"/>
                         </StackPanel>
-                        <Button Grid.Column="1" Classes="primary" Content="⬇ Install ClamAV Engine" Command="{Binding InstallEngineCommand}" IsEnabled="{Binding !IsInstallingEngine}" Padding="14,8"/>
+                        <Button Grid.Column="1" Classes="defender-primary" Content="Install ClamAV engine" Command="{Binding InstallEngineCommand}" IsEnabled="{Binding !IsInstallingEngine}"/>
                     </Grid>
 
                     <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="12">
-                        <StackPanel Spacing="6">
-                            <TextBlock Text="System Recommendation / Package Manager Command:" FontWeight="SemiBold" FontSize="11" Opacity="0.7"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock Text="Recommended system command / setup method:" FontWeight="SemiBold" FontSize="11" Opacity="0.7"/>
                             <TextBox Text="{Binding RecommendedInstallCommand}" IsReadOnly="true" FontFamily="Monospace" FontSize="11" Background="Transparent" BorderThickness="0"/>
                         </StackPanel>
                     </Border>
@@ -35,59 +36,59 @@
                 </StackPanel>
             </Border>
 
-            <!-- Binary Locations Card -->
-            <Border Classes="card">
-                <StackPanel Spacing="14">
+            <!-- Card 2: Binary & Quarantine Paths -->
+            <Border Classes="defender-card">
+                <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="Engine &amp; Directory Paths" FontWeight="Bold" FontSize="14"/>
-                        <Button Grid.Column="1" Content="🔍 Auto-Detect System Paths" Command="{Binding AutoDetectClamAvCommand}" Padding="10,4" FontSize="11"/>
+                        <TextBlock Grid.Column="0" Text="Engine and storage directories" FontWeight="SemiBold" FontSize="16"/>
+                        <Button Grid.Column="1" Classes="defender-secondary" Content="Auto-detect paths" Command="{Binding AutoDetectClamAvCommand}"/>
                     </Grid>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Custom ClamAV Binary Directory (Leave blank to use system $PATH)" FontSize="12" Opacity="0.8"/>
+                        <TextBlock Text="ClamAV binary directory (Leave blank to use system PATH)" FontSize="12" Opacity="0.8"/>
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0" Text="{Binding CustomClamAvPath}" Watermark="e.g. /usr/bin, /opt/homebrew/bin, or C:\Program Files\ClamAV" Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseClamAvPathCommand}" Padding="12,6"/>
+                            <Button Grid.Column="1" Classes="defender-secondary" Content="Browse..." Command="{Binding BrowseClamAvPathCommand}"/>
                         </Grid>
                     </StackPanel>
 
                     <StackPanel Spacing="6">
-                        <TextBlock Text="Custom Quarantine Storage Directory (Optional)" FontSize="12" Opacity="0.8"/>
+                        <TextBlock Text="Custom quarantine vault folder (Optional)" FontSize="12" Opacity="0.8"/>
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBox Grid.Column="0" Text="{Binding CustomQuarantinePath}" Watermark="Default application data folder" Margin="0,0,8,0"/>
-                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseQuarantinePathCommand}" Padding="12,6"/>
+                            <Button Grid.Column="1" Classes="defender-secondary" Content="Browse..." Command="{Binding BrowseQuarantinePathCommand}"/>
                         </Grid>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <!-- Scanning Options Card -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="Default Scan Preferences" FontWeight="Bold" FontSize="14"/>
-                    <CheckBox Content="Enable Heuristic Alerts (--heuristic-alerts=yes)" IsChecked="{Binding HeuristicAlerts}"/>
-                    <CheckBox Content="Alert on Encrypted Archives (--alert-encrypted=yes)" IsChecked="{Binding ScanEncrypted}"/>
-                    <CheckBox Content="Automatically move infected files to quarantine vault" IsChecked="{Binding MoveToQuarantine}"/>
-                    <CheckBox Content="Retain temporary unpacked files (--leave-temps=yes)" IsChecked="{Binding LeaveTemps}"/>
+            <!-- Card 3: Scanning Options -->
+            <Border Classes="defender-card">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Threat scanning preferences" FontWeight="SemiBold" FontSize="16"/>
+                    <CheckBox Content="Enable heuristic detection alerts (--heuristic-alerts=yes)" IsChecked="{Binding HeuristicAlerts}"/>
+                    <CheckBox Content="Alert on encrypted archives (--alert-encrypted=yes)" IsChecked="{Binding ScanEncrypted}"/>
+                    <CheckBox Content="Move infected items directly to quarantine vault" IsChecked="{Binding MoveToQuarantine}"/>
+                    <CheckBox Content="Retain temporary unpacked analysis files (--leave-temps=yes)" IsChecked="{Binding LeaveTemps}"/>
                 </StackPanel>
             </Border>
 
-            <!-- System Integration Card -->
-            <Border Classes="card">
-                <StackPanel Spacing="12">
-                    <TextBlock Text="System Integration" FontWeight="Bold" FontSize="14"/>
-                    <CheckBox Content="Start ClamAV GUI automatically upon user login" IsChecked="{Binding StartOnLogin}"/>
+            <!-- Card 4: System Integration -->
+            <Border Classes="defender-card">
+                <StackPanel Spacing="14">
+                    <TextBlock Text="Startup and window behavior" FontWeight="SemiBold" FontSize="16"/>
+                    <CheckBox Content="Start ClamAV GUI automatically upon system login" IsChecked="{Binding StartOnLogin}"/>
                     <CheckBox Content="Minimize application to system tray on window close" IsChecked="{Binding MinimizeToTray}"/>
                 </StackPanel>
             </Border>
 
-            <!-- Actions -->
+            <!-- Save Actions -->
             <StackPanel Orientation="Horizontal" Spacing="12">
-                <Button Classes="primary" Content="💾 Save Settings" Command="{Binding SaveSettingsCommand}" Padding="16,10"/>
-                <Button Content="🔄 Reload Current Settings" Command="{Binding LoadSettingsCommand}" Padding="14,10"/>
+                <Button Classes="defender-primary" Content="Save settings" Command="{Binding SaveSettingsCommand}"/>
+                <Button Classes="defender-secondary" Content="Reload settings" Command="{Binding LoadSettingsCommand}"/>
             </StackPanel>
 
-            <Border Classes="card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
+            <Border Classes="defender-card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
                 <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13"/>
             </Border>
         </StackPanel>

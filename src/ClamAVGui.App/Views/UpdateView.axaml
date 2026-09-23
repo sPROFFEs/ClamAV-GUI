@@ -3,34 +3,42 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              x:Class="ClamAVGui.App.Views.UpdateView"
              x:DataType="vm:UpdateViewModel">
-    <Grid Margin="28,24" RowDefinitions="Auto,Auto,*,Auto">
-        <StackPanel Grid.Row="0" Spacing="6">
-            <TextBlock Text="Virus Definitions &amp; Signatures" FontSize="22" FontWeight="Bold"/>
-            <TextBlock Text="Keep virus definitions updated to protect against the latest threats." Opacity="0.7"/>
-        </StackPanel>
-
-        <!-- Actions -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16,0,14" Spacing="12">
-            <Button Classes="primary" Content="🔄 Update Definitions Now" Command="{Binding UpdateSignaturesCommand}" IsEnabled="{Binding !IsUpdating}" Padding="16,10"/>
-            <Button Classes="danger" Content="Cancel" Command="{Binding CancelUpdateCommand}" IsVisible="{Binding IsUpdating}" Padding="14,10"/>
-        </StackPanel>
-
-        <!-- Console Log Output Card -->
-        <Border Grid.Row="2" Classes="card" Padding="12">
-            <DockPanel>
-                <TextBlock DockPanel.Dock="Top" Text="freshclam Log Output" FontWeight="Bold" FontSize="12" Margin="0,0,0,8" Opacity="0.8"/>
-                <ScrollViewer>
-                    <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
-                </ScrollViewer>
-            </DockPanel>
-        </Border>
-
-        <!-- Status Bottom Banner -->
-        <Border Grid.Row="3" Classes="card" Margin="0,12,0,0">
-            <StackPanel Spacing="6">
-                <TextBlock Text="{Binding StatusText}" FontWeight="SemiBold" FontSize="13"/>
-                <ProgressBar IsIndeterminate="{Binding IsUpdating}" IsVisible="{Binding IsUpdating}" Height="4"/>
+    <ScrollViewer Margin="36,28">
+        <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Security intelligence updates" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock Text="Security intelligence is used to identify threats and protect your device against the latest malware." FontSize="13" Opacity="0.7"/>
             </StackPanel>
-        </Border>
-    </Grid>
+
+            <!-- Intelligence Overview Card -->
+            <Border Classes="defender-card">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
+                    <PathIcon Grid.Column="0" Grid.RowSpan="3" Data="{StaticResource IconUpdates}" Width="40" Height="40" Foreground="#0067C0" VerticalAlignment="Center" Margin="0,0,20,0"/>
+
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="Virus and spyware definition status" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding StatusText}" FontSize="13" Opacity="0.75" Margin="0,4,0,12"/>
+
+                    <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="12">
+                        <Button Classes="defender-primary" Content="Check for updates" Command="{Binding UpdateSignaturesCommand}" IsEnabled="{Binding !IsUpdating}"/>
+                        <Button Classes="defender-danger" Content="Cancel update" Command="{Binding CancelUpdateCommand}" IsVisible="{Binding IsUpdating}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Log Output Terminal -->
+            <Border Classes="defender-card" Padding="0">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
+                        <TextBlock Text="Update process logs (freshclam)" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                    </Border>
+                    <ScrollViewer MaxHeight="300" Margin="16">
+                        <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <ProgressBar IsIndeterminate="{Binding IsUpdating}" IsVisible="{Binding IsUpdating}" Height="4"/>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

@@ -3,102 +3,120 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              x:Class="ClamAVGui.App.Views.ScanView"
              x:DataType="vm:ScanViewModel">
-    <Grid Margin="28,24" RowDefinitions="Auto,Auto,Auto,*,Auto">
-        <!-- Header & Target Picker -->
-        <StackPanel Grid.Row="0" Spacing="12">
-            <TextBlock Text="Antivirus Scanner" FontSize="22" FontWeight="Bold"/>
-
-            <!-- Selection Bar -->
-            <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                <TextBox Grid.Column="0" Text="{Binding SelectedTargetPath}" Watermark="Select file or directory to scan..." Margin="0,0,8,0"/>
-                <Button Grid.Column="1" Content="📄 Scan File" Command="{Binding BrowseFileCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0" Padding="14,8"/>
-                <Button Grid.Column="2" Content="📁 Scan Folder" Command="{Binding BrowseFolderCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0" Padding="14,8"/>
-                <Button Grid.Column="3" Classes="primary" Content="⚡ Quick Scan" Command="{Binding QuickScanHomeCommand}" IsEnabled="{Binding !IsScanning}"/>
-            </Grid>
-        </StackPanel>
-
-        <!-- Options Bar -->
-        <WrapPanel Grid.Row="1" Orientation="Horizontal" Margin="0,14,0,10">
-            <CheckBox Content="Heuristic Alerts" IsChecked="{Binding HeuristicAlerts}" Margin="0,0,16,0"/>
-            <CheckBox Content="Alert on Encrypted Archives" IsChecked="{Binding ScanEncrypted}" Margin="0,0,16,0"/>
-            <CheckBox Content="Auto-Move Threats to Quarantine" IsChecked="{Binding MoveToQuarantine}" Margin="0,0,16,0"/>
-            <Button Classes="danger" Content="Cancel Scan" Command="{Binding CancelScanCommand}" IsVisible="{Binding IsScanning}" Margin="12,0,0,0"/>
-        </WrapPanel>
-
-        <!-- Live Scan Status Banner -->
-        <Border Grid.Row="2" Classes="card" Margin="0,0,0,12" IsVisible="{Binding ScanVerdictText, Converter={StaticResource NullToBoolConverter}}">
-            <StackPanel Spacing="6">
-                <Grid ColumnDefinitions="*,Auto">
-                    <TextBlock Grid.Column="0" Text="{Binding ScanVerdictText}" FontWeight="Bold" FontSize="14"/>
-                    <TextBlock Grid.Column="1" Text="{Binding ScannedFilesCount, StringFormat='Files Scanned: {0}'}" FontSize="12" Opacity="0.7"/>
-                </Grid>
-                <TextBlock Text="{Binding CurrentScanningFile}" FontSize="12" TextTrimming="CharacterEllipsis" Opacity="0.75" FontFamily="Monospace"/>
-                <ProgressBar IsIndeterminate="{Binding IsScanning}" IsVisible="{Binding IsScanning}" Height="4" Margin="0,4,0,0"/>
+    <ScrollViewer Margin="36,28">
+        <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
+            <!-- Header -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Virus &amp; threat protection" FontSize="26" FontWeight="SemiBold"/>
+                <TextBlock Text="Threats are scanned and resolved to keep your system safe." FontSize="13" Opacity="0.7"/>
             </StackPanel>
-        </Border>
 
-        <!-- Results Table -->
-        <Border Grid.Row="3" Classes="card" Padding="0">
-            <DockPanel>
-                <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="12,8" CornerRadius="8,8,0,0">
-                    <Grid ColumnDefinitions="*,Auto,Auto">
-                        <TextBlock Grid.Column="0" Text="Path / Target" FontWeight="SemiBold" FontSize="12"/>
-                        <TextBlock Grid.Column="1" Text="Status / Threat" FontWeight="SemiBold" FontSize="12" Margin="10,0"/>
-                        <TextBlock Grid.Column="2" Text="Actions" FontWeight="SemiBold" FontSize="12" Margin="10,0"/>
+            <!-- Scan Configuration & Target Selection Card -->
+            <Border Classes="defender-card">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Current threats" FontWeight="SemiBold" FontSize="16"/>
+
+                    <!-- Action Bar -->
+                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
+                        <TextBox Grid.Column="0" Text="{Binding SelectedTargetPath}" Watermark="Select target path or enter directory..." Margin="0,0,10,0"/>
+                        <Button Grid.Column="1" Classes="defender-secondary" Content="Browse file" Command="{Binding BrowseFileCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="2" Classes="defender-secondary" Content="Browse folder" Command="{Binding BrowseFolderCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0"/>
+                        <Button Grid.Column="3" Classes="defender-primary" Content="Quick scan" Command="{Binding QuickScanHomeCommand}" IsEnabled="{Binding !IsScanning}"/>
                     </Grid>
-                </Border>
 
-                <!-- Empty state when no items -->
-                <TextBlock Text="No scan in progress. Select a file or folder above to begin scanning."
-                           HorizontalAlignment="Center" VerticalAlignment="Center"
-                           Opacity="0.5" FontSize="13" Margin="20"
-                           IsVisible="{Binding !Results.Count}"/>
+                    <!-- Advanced Scan Settings -->
+                    <StackPanel Spacing="8" Margin="0,6,0,0">
+                        <TextBlock Text="Scanning options" FontWeight="SemiBold" FontSize="13" Opacity="0.8"/>
+                        <WrapPanel Orientation="Horizontal">
+                            <CheckBox Content="Heuristic detection" IsChecked="{Binding HeuristicAlerts}" Margin="0,0,20,0"/>
+                            <CheckBox Content="Alert on encrypted archives" IsChecked="{Binding ScanEncrypted}" Margin="0,0,20,0"/>
+                            <CheckBox Content="Automatically move threats to quarantine" IsChecked="{Binding MoveToQuarantine}" Margin="0,0,20,0"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
 
-                <ListBox ItemsSource="{Binding Results}" Background="Transparent" IsVisible="{Binding Results.Count}">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate x:DataType="vm:DisplayScanResult">
-                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,4">
-                                <TextBlock Grid.Column="0" Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" FontFamily="Monospace" FontSize="12" VerticalAlignment="Center"/>
-                                <Border Grid.Column="1" Background="{Binding Status, Converter={StaticResource InfectedToBrushConverter}}" CornerRadius="4" Padding="6,2" Margin="10,0">
-                                    <TextBlock Text="{Binding Status}" Foreground="White" FontWeight="Bold" FontSize="11"/>
-                                </Border>
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                                    <Button Content="Quarantine"
-                                            Command="{Binding $parent[UserControl].((vm:ScanViewModel)DataContext).QuarantineItemCommand}"
-                                            CommandParameter="{Binding}"
-                                            Classes="danger" IsVisible="{Binding IsInfected}" Padding="6,3" FontSize="11"/>
-                                    <Button Content="Open Folder"
-                                            Command="{Binding $parent[UserControl].((vm:ScanViewModel)DataContext).OpenContainingFolderCommand}"
-                                            CommandParameter="{Binding}"
-                                            Padding="6,3" FontSize="11"/>
-                                </StackPanel>
-                            </Grid>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </DockPanel>
-        </Border>
+            <!-- Active Scan Status / Progress Card -->
+            <Border Classes="defender-card" IsVisible="{Binding ScanVerdictText, Converter={StaticResource NullToBoolConverter}}">
+                <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="2">
+                            <TextBlock Text="{Binding ScanVerdictText}" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock Text="{Binding CurrentScanningFile}" FontSize="12" TextTrimming="CharacterEllipsis" Opacity="0.7" FontFamily="Monospace"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding ScannedFilesCount, StringFormat='Files scanned: {0}'}" FontSize="12" Opacity="0.75"/>
+                            <Button Classes="defender-danger" Content="Cancel" Command="{Binding CancelScanCommand}" IsVisible="{Binding IsScanning}"/>
+                        </StackPanel>
+                    </Grid>
 
-        <!-- Summary Statistics Footer -->
-        <Border Grid.Row="4" Classes="card" Margin="0,12,0,0" IsVisible="{Binding CurrentSummary, Converter={StaticResource NullToBoolConverter}}">
-            <Grid ColumnDefinitions="*,*,*,*">
-                <StackPanel Grid.Column="0">
-                    <TextBlock Text="Files Scanned" FontSize="11" Opacity="0.7"/>
-                    <TextBlock Text="{Binding CurrentSummary.ScannedFiles}" FontWeight="Bold" FontSize="16"/>
+                    <ProgressBar IsIndeterminate="{Binding IsScanning}" IsVisible="{Binding IsScanning}" Height="4" Margin="0,6,0,0"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1">
-                    <TextBlock Text="Infected Files" FontSize="11" Opacity="0.7"/>
-                    <TextBlock Text="{Binding CurrentSummary.InfectedFiles}" FontWeight="Bold" FontSize="16" Foreground="#E53935"/>
-                </StackPanel>
-                <StackPanel Grid.Column="2">
-                    <TextBlock Text="Scan Duration" FontSize="11" Opacity="0.7"/>
-                    <TextBlock Text="{Binding CurrentSummary.TimeTaken}" FontWeight="Bold" FontSize="16"/>
-                </StackPanel>
-                <StackPanel Grid.Column="3">
-                    <TextBlock Text="Engine Version" FontSize="11" Opacity="0.7"/>
-                    <TextBlock Text="{Binding CurrentSummary.EngineVersion}" FontWeight="Bold" FontSize="16"/>
-                </StackPanel>
-            </Grid>
-        </Border>
-    </Grid>
+            </Border>
+
+            <!-- Results Section -->
+            <Border Classes="defender-card" Padding="0" MinHeight="200">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
+                            <TextBlock Grid.Column="0" Text="Scanned items" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
+                            <TextBlock Grid.Column="1" Text="Status" FontWeight="SemiBold" FontSize="12" Opacity="0.8" Margin="14,0"/>
+                            <TextBlock Grid.Column="2" Text="Actions" FontWeight="SemiBold" FontSize="12" Opacity="0.8" Margin="14,0"/>
+                        </Grid>
+                    </Border>
+
+                    <!-- Empty State -->
+                    <TextBlock Text="No active scan results. Click 'Quick scan' or select a file/folder to scan."
+                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                               Opacity="0.5" FontSize="13" Margin="30"
+                               IsVisible="{Binding !Results.Count}"/>
+
+                    <ListBox ItemsSource="{Binding Results}" Background="Transparent" IsVisible="{Binding Results.Count}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:DisplayScanResult">
+                                <Grid ColumnDefinitions="*,Auto,Auto" Margin="8,4">
+                                    <TextBlock Grid.Column="0" Text="{Binding FilePath}" TextTrimming="CharacterEllipsis" FontFamily="Monospace" FontSize="12" VerticalAlignment="Center"/>
+                                    <Border Grid.Column="1" Background="{Binding Status, Converter={StaticResource InfectedToBrushConverter}}" CornerRadius="4" Padding="8,3" Margin="12,0">
+                                        <TextBlock Text="{Binding Status}" Foreground="White" FontWeight="Bold" FontSize="11"/>
+                                    </Border>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Classes="defender-danger" Content="Quarantine"
+                                                Command="{Binding $parent[UserControl].((vm:ScanViewModel)DataContext).QuarantineItemCommand}"
+                                                CommandParameter="{Binding}"
+                                                IsVisible="{Binding IsInfected}" Padding="8,4" FontSize="11"/>
+                                        <Button Classes="defender-secondary" Content="Open folder"
+                                                Command="{Binding $parent[UserControl].((vm:ScanViewModel)DataContext).OpenContainingFolderCommand}"
+                                                CommandParameter="{Binding}"
+                                                Padding="8,4" FontSize="11"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- Summary Statistics Footer -->
+            <Border Classes="defender-card" IsVisible="{Binding CurrentSummary, Converter={StaticResource NullToBoolConverter}}">
+                <Grid ColumnDefinitions="*,*,*,*">
+                    <StackPanel Grid.Column="0" Spacing="2">
+                        <TextBlock Text="Scanned files" FontSize="11" Opacity="0.7"/>
+                        <TextBlock Text="{Binding CurrentSummary.ScannedFiles}" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="Infected files" FontSize="11" Opacity="0.7"/>
+                        <TextBlock Text="{Binding CurrentSummary.InfectedFiles}" FontWeight="Bold" FontSize="18" Foreground="#C42B1C"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="2">
+                        <TextBlock Text="Time taken" FontSize="11" Opacity="0.7"/>
+                        <TextBlock Text="{Binding CurrentSummary.TimeTaken}" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Spacing="2">
+                        <TextBlock Text="Engine version" FontSize="11" Opacity="0.7"/>
+                        <TextBlock Text="{Binding CurrentSummary.EngineVersion}" FontWeight="Bold" FontSize="18"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
 </UserControl>

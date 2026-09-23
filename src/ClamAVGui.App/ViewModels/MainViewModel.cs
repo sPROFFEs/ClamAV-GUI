@@ -7,6 +7,8 @@ using CommunityToolkit.Mvvm.Input;
 
 namespace ClamAVGui.App.ViewModels;
 
+public sealed record NavItem(string Title, string IconResourceKey);
+
 public sealed partial class MainViewModel : ViewModelBase
 {
     public DashboardViewModel Dashboard { get; }
@@ -20,18 +22,18 @@ public sealed partial class MainViewModel : ViewModelBase
     public DiagnosticsViewModel Diagnostics { get; }
     public SettingsViewModel Settings { get; }
 
-    public ObservableCollection<string> NavItems { get; } = new()
+    public ObservableCollection<NavItem> NavItems { get; } = new()
     {
-        "Overview",
-        "Scan",
-        "Security intelligence",
-        "Protection history",
-        "Quarantine",
-        "Engine",
-        "Real-time monitoring",
-        "Scheduled scans",
-        "Diagnostics",
-        "Settings"
+        new("Home", "IconShield"),
+        new("Virus & threat protection", "IconScan"),
+        new("Security intelligence", "IconUpdates"),
+        new("Protection history", "IconHistory"),
+        new("Quarantined items", "IconQuarantine"),
+        new("ClamAV engine service", "IconDaemon"),
+        new("Real-time protection", "IconMonitoring"),
+        new("Scan scheduler", "IconScheduler"),
+        new("System diagnostics", "IconDiagnostics"),
+        new("Settings", "IconSettings")
     };
 
     [ObservableProperty]
