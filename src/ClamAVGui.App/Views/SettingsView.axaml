@@ -11,6 +11,33 @@
                 <TextBlock Text="Manage settings for ClamAV engine integration, real-time protection, and scanning behavior." FontSize="13" Opacity="0.7"/>
             </StackPanel>
 
+            <!-- Card: Application Software Updates -->
+            <Border Classes="defender-card">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Grid.Column="0" Spacing="4">
+                            <TextBlock Text="ClamAV GUI software updates" FontWeight="SemiBold" FontSize="16"/>
+                            <TextBlock Text="{Binding CurrentAppVersion, StringFormat='Installed application version: {0}'}" FontSize="12" Opacity="0.75"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="defender-primary" Content="Check for GUI updates" Command="{Binding CheckAppUpdatesCommand}" IsEnabled="{Binding !IsCheckingAppUpdates}"/>
+                    </Grid>
+
+                    <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" CornerRadius="6" Padding="12"
+                            IsVisible="{Binding AvailableAppRelease, Converter={StaticResource NullToBoolConverter}}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel Grid.Column="0" Spacing="4">
+                                <TextBlock Text="{Binding AvailableAppRelease.TagName, StringFormat='Update available: {0}'}" FontWeight="Bold" FontSize="14" Foreground="#0067C0"/>
+                                <TextBlock Text="A newer version of ClamAV GUI is ready to install from GitHub." FontSize="12" Opacity="0.8"/>
+                            </StackPanel>
+                            <Button Grid.Column="1" Classes="defender-primary" Content="Update &amp; Restart" Command="{Binding ApplyAppUpdateCommand}" Padding="14,8"/>
+                        </Grid>
+                    </Border>
+
+                    <TextBlock Text="{Binding AppUpdateStatusMessage}" FontSize="12" FontWeight="SemiBold" IsVisible="{Binding AppUpdateStatusMessage, Converter={StaticResource NullToBoolConverter}}"/>
+                    <ProgressBar IsIndeterminate="{Binding IsCheckingAppUpdates}" IsVisible="{Binding IsCheckingAppUpdates}" Height="4"/>
+                </StackPanel>
+            </Border>
+
             <!-- Card 1: Engine Installation Helper -->
             <Border Classes="defender-card" BorderBrush="#0067C0" BorderThickness="1.5">
                 <StackPanel Spacing="12">

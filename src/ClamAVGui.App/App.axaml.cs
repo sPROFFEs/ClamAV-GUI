@@ -225,6 +225,7 @@ public partial class App : Application
         });
 
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
+        services.AddSingleton<IAppUpdateService, AppUpdateService>();
 
         // ViewModels
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(

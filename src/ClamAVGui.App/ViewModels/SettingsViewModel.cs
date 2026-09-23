@@ -1,3 +1,4 @@
+using ClamAVGui.App.Services;
 using ClamAVGui.Core.Interfaces;
 using ClamAVGui.Core.Models;
 using ClamAVGui.Platform.Interfaces;
@@ -14,6 +15,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     private readonly IFileDialogService _fileDialogService;
     private readonly INotificationService _notificationService;
     private readonly IClamAvInstallerService _installerService;
+    private readonly IAppUpdateService _appUpdateService;
 
     [ObservableProperty]
     private string _customClamAvPath = string.Empty;
@@ -51,6 +53,16 @@ public sealed partial class SettingsViewModel : ViewModelBase
     [ObservableProperty]
     private string _engineInstallStatus = string.Empty;
 
+    [ObservableProperty]
+    private bool _isCheckingAppUpdates;
+
+    [ObservableProperty]
+    private string _appUpdateStatusMessage = string.Empty;
+
+    [ObservableProperty]
+    private AppReleaseInfo? _availableAppRelease;
+
+    public string CurrentAppVersion => _appUpdateService.CurrentVersion;
     public string RecommendedInstallCommand => _installerService.RecommendedCommandOrMethod;
 
     public SettingsViewModel(
@@ -59,7 +71,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
         IStartupService startupService,
         IFileDialogService fileDialogService,
         INotificationService notificationService,
-        IClamAvInstallerService installerService)
+        IClamAvInstallerService installerService,
+        IAppUpdateService appUpdateService)
     {
         _settingsService = settingsService;
         _binaryLocator = binaryLocator;
@@ -67,6 +80,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         _fileDialogService = fileDialogService;
         _notificationService = notificationService;
         _installerService = installerService;
+        _appUpdateService = appUpdateService;
     }
 
     [RelayCommand]
@@ -83,6 +97,51 @@ public sealed partial class SettingsViewModel : ViewModelBase
         LeaveTemps = s.LeaveTemps;
 
         StartOnLogin = await _startupService.IsStartOnLoginEnabledAsync();
+    }
+
+    [RelayCommand]
+    public async Task CheckAppUpdatesAsync()
+    {
+        IsCheckingAppUpdates = true;
+        AppUpdateStatusMessage = "Checking GitHub for new releases...";
+        AvailableAppRelease = null;
+
+        try
+        {
+            var release = await _appUpdateService.CheckForUpdatesAsync();
+            if (release != null && !string.Equals(release.TagName, CurrentAppVersion, StringComparison.OrdinalIgnoreCase))
+            {
+                AvailableAppRelease = release;
+                AppUpdateStatusMessage = $"New version {release.TagName} is available!";
+                await _notificationService.ShowAsync("App Update Available", $"Version {release.TagName} is ready to install.");
+            }
+            else
+            {
+                AppUpdateStatusMessage = $"ClamAV GUI is up to date ({CurrentAppVersion}).";
+            }
+        }
+        catch (Exception ex)
+        {
+            AppUpdateStatusMessage = $"Could not check updates: {ex.Message}";
+        }
+        finally
+        {
+            IsCheckingAppUpdates = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ApplyAppUpdateAsync()
+    {
+        if (AvailableAppRelease == null) return;
+        AppUpdateStatusMessage = "Applying update...";
+
+        var progress = new Progress<string>(msg =>
+        {
+            AppUpdateStatusMessage = msg;
+        });
+
+        await _appUpdateService.ApplyUpdateAndRestartAsync(AvailableAppRelease, progress);
     }
 
     [RelayCommand]

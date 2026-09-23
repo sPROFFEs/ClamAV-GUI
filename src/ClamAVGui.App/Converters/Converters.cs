@@ -1,8 +1,26 @@
 using System.Globalization;
+using Avalonia;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
 namespace ClamAVGui.App.Converters;
+
+public class ResourceNameToGeometryConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is string key && Application.Current?.Resources.TryGetResource(key, null, out var resource) == true && resource is Geometry geometry)
+        {
+            return geometry;
+        }
+        return null;
+    }
+
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        throw new NotSupportedException();
+    }
+}
 
 public class NullToBoolConverter : IValueConverter
 {
@@ -40,18 +58,18 @@ public class InfectedToBrushConverter : IValueConverter
                 status.Contains("Infected", StringComparison.OrdinalIgnoreCase) ||
                 status.Contains("THREAT", StringComparison.OrdinalIgnoreCase))
             {
-                return Brush.Parse("#E53935"); // Red
+                return Brush.Parse("#C42B1C"); // Red
             }
             if (status.EndsWith("OK", StringComparison.OrdinalIgnoreCase) ||
                 status.Contains("Clean", StringComparison.OrdinalIgnoreCase) ||
                 status.Contains("Complete", StringComparison.OrdinalIgnoreCase))
             {
-                return Brush.Parse("#43A047"); // Green
+                return Brush.Parse("#107C10"); // Green
             }
             if (status.Contains("ERROR", StringComparison.OrdinalIgnoreCase) ||
                 status.StartsWith("WARNING", StringComparison.OrdinalIgnoreCase))
             {
-                return Brush.Parse("#FB8C00"); // Orange
+                return Brush.Parse("#D83B01"); // Orange
             }
         }
 
@@ -70,9 +88,9 @@ public class EventTypeToBrushConverter : IValueConverter
     {
         if (value is string eventType)
         {
-            if (eventType.Equals("Scan", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#1E88E5"); // Blue
-            if (eventType.Contains("Threat", StringComparison.OrdinalIgnoreCase) || eventType.Contains("Failed", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#E53935"); // Red
-            if (eventType.Equals("Update", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#43A047"); // Green
+            if (eventType.Equals("Scan", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#0067C0"); // Blue
+            if (eventType.Contains("Threat", StringComparison.OrdinalIgnoreCase) || eventType.Contains("Failed", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#C42B1C"); // Red
+            if (eventType.Equals("Update", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#107C10"); // Green
             if (eventType.Contains("Config", StringComparison.OrdinalIgnoreCase)) return Brush.Parse("#8E24AA"); // Purple
         }
         return Brush.Parse("#757575");

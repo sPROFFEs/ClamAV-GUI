@@ -3,7 +3,8 @@
              xmlns:vm="using:ClamAVGui.App.ViewModels"
              xmlns:models="using:ClamAVGui.Core.Models"
              x:Class="ClamAVGui.App.Views.QuarantineView"
-             x:DataType="vm:QuarantineViewModel">
+             x:DataType="vm:QuarantineViewModel"
+             x:Name="RootQuarantineView">
     <ScrollViewer Margin="36,28">
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
             <!-- Header -->
@@ -49,11 +50,11 @@
                                     <TextBlock Grid.Column="3" Text="{Binding FileHashSha256}" TextTrimming="CharacterEllipsis" FontFamily="Monospace" FontSize="11" Opacity="0.6" VerticalAlignment="Center"/>
                                     <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="10,0,0,0">
                                         <Button Classes="defender-secondary" Content="Restore"
-                                                Command="{Binding $parent[UserControl].((vm:QuarantineViewModel)DataContext).RestoreItemCommand}"
+                                                Command="{Binding #RootQuarantineView.((vm:QuarantineViewModel)DataContext).RestoreItemCommand}"
                                                 CommandParameter="{Binding}"
                                                 Padding="10,4" FontSize="11"/>
                                         <Button Classes="defender-danger" Content="Remove"
-                                                Command="{Binding $parent[UserControl].((vm:QuarantineViewModel)DataContext).DeleteItemCommand}"
+                                                Command="{Binding #RootQuarantineView.((vm:QuarantineViewModel)DataContext).DeleteItemCommand}"
                                                 CommandParameter="{Binding}"
                                                 Padding="10,4" FontSize="11"/>
                                     </StackPanel>

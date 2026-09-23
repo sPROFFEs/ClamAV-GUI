@@ -97,5 +97,10 @@ public sealed partial class MainViewModel : ViewModelBase
         await Monitoring.LoadSettingsAsync();
         await Scheduler.LoadAsync();
         await Diagnostics.RefreshReportAsync();
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(2000);
+            await Settings.CheckAppUpdatesAsync();
+        });
     }
 }
