@@ -51,4 +51,17 @@ _ReSharper*/
 # Agent / Tooling
 .praimate/
 opencode.json
+.codex/
+
+# OS Specific
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Builds & Releases
+publish/
+*.zip
+*.tar.gz
+*.dmg
+archive-files.txt
 
