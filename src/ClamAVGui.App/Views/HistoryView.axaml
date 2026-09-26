@@ -37,10 +37,11 @@
                     </Border>
 
                     <!-- Empty State -->
-                    <TextBlock Text="No security actions or events found in protection history."
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Opacity="0.5" FontSize="13" Margin="30"
-                               IsVisible="{Binding !Events.Count}"/>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30" Spacing="10" IsVisible="{Binding !Events.Count}">
+                        <PathIcon Data="{StaticResource IconHistory}" Width="48" Height="48" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.5" HorizontalAlignment="Center" />
+                        <TextBlock Text="No security actions or events found in protection history."
+                                   Opacity="0.5" FontSize="13" HorizontalAlignment="Center" />
+                    </StackPanel>
 
                     <ListBox ItemsSource="{Binding Events}" Background="Transparent" IsVisible="{Binding Events.Count}">
                         <ListBox.ItemTemplate>

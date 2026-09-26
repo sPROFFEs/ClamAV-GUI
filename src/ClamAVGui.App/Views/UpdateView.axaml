@@ -33,7 +33,14 @@
                         <TextBlock Text="freshclam Update Output" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                     </Border>
                     <ScrollViewer MaxHeight="300" Margin="16">
-                        <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
+                        <Panel>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30" Spacing="10" IsVisible="{Binding OutputText, Converter={StaticResource NullToBoolConverter}, ConverterParameter=Invert}">
+                                <PathIcon Data="{StaticResource IconUpdates}" Width="48" Height="48" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.5" HorizontalAlignment="Center" />
+                                <TextBlock Text="No update logs. Click 'Check for Updates' to fetch the latest signatures."
+                                           Opacity="0.5" FontSize="13" HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <TextBox Text="{Binding OutputText}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap" IsVisible="{Binding OutputText, Converter={StaticResource NullToBoolConverter}}"/>
+                        </Panel>
                     </ScrollViewer>
                 </DockPanel>
             </Border>

@@ -42,7 +42,14 @@
                         <TextBlock Text="Service Output Stream" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                     </Border>
                     <ScrollViewer MaxHeight="220" Margin="16">
-                        <TextBox Text="{Binding CommandOutput}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap"/>
+                        <Panel>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30" Spacing="10" IsVisible="{Binding CommandOutput, Converter={StaticResource NullToBoolConverter}, ConverterParameter=Invert}">
+                                <PathIcon Data="{StaticResource IconDaemon}" Width="48" Height="48" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.5" HorizontalAlignment="Center" />
+                                <TextBlock Text="No service output available."
+                                           Opacity="0.5" FontSize="13" HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <TextBox Text="{Binding CommandOutput}" IsReadOnly="true" FontFamily="Monospace" FontSize="12" Background="Transparent" BorderThickness="0" TextWrapping="Wrap" IsVisible="{Binding CommandOutput, Converter={StaticResource NullToBoolConverter}}"/>
+                        </Panel>
                     </ScrollViewer>
                 </DockPanel>
             </Border>

@@ -37,9 +37,10 @@
                         <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
                             <TextBlock Text="Watched Directories" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                         </Border>
-                        <TextBlock Text="No directories added. Click 'Add Folder to Watch'."
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Opacity="0.5" FontSize="12" Margin="16" IsVisible="{Binding !MonitoredPaths.Count}"/>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16" Spacing="6" IsVisible="{Binding !MonitoredPaths.Count}">
+                            <PathIcon Data="{StaticResource IconMonitoring}" Width="32" Height="32" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.4" HorizontalAlignment="Center" />
+                            <TextBlock Text="No directories added. Click 'Add Folder to Watch'." Opacity="0.5" FontSize="12" HorizontalAlignment="Center" />
+                        </StackPanel>
                         <ListBox ItemsSource="{Binding MonitoredPaths}" Background="Transparent" IsVisible="{Binding MonitoredPaths.Count}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -62,9 +63,10 @@
                         <Border DockPanel.Dock="Top" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" Padding="16,10" CornerRadius="8,8,0,0">
                             <TextBlock Text="Exclusions" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                         </Border>
-                        <TextBlock Text="No exclusion rules configured."
-                                   HorizontalAlignment="Center" VerticalAlignment="Center"
-                                   Opacity="0.5" FontSize="12" Margin="16" IsVisible="{Binding !ExcludedPaths.Count}"/>
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16" Spacing="6" IsVisible="{Binding !ExcludedPaths.Count}">
+                            <PathIcon Data="{StaticResource IconShield}" Width="32" Height="32" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.4" HorizontalAlignment="Center" />
+                            <TextBlock Text="No exclusion rules configured." Opacity="0.5" FontSize="12" HorizontalAlignment="Center" />
+                        </StackPanel>
                         <ListBox ItemsSource="{Binding ExcludedPaths}" Background="Transparent" IsVisible="{Binding ExcludedPaths.Count}">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
@@ -89,13 +91,19 @@
                         <TextBlock Text="Live Monitoring Event Stream" FontWeight="SemiBold" FontSize="12" Opacity="0.8"/>
                     </Border>
                     <ScrollViewer MaxHeight="240" Margin="16">
-                        <ListBox ItemsSource="{Binding LogEntries}" Background="Transparent">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding}" FontFamily="Monospace" FontSize="11" Margin="0,2"/>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
+                        <Panel>
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="16" Spacing="6" IsVisible="{Binding !LogEntries.Count}">
+                                <PathIcon Data="{StaticResource IconMonitoring}" Width="32" Height="32" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.4" HorizontalAlignment="Center" />
+                                <TextBlock Text="No activity. Enable monitoring to start logging events." Opacity="0.5" FontSize="12" HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <ListBox ItemsSource="{Binding LogEntries}" Background="Transparent" IsVisible="{Binding LogEntries.Count}">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding}" FontFamily="Monospace" FontSize="11" Margin="0,2"/>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Panel>
                     </ScrollViewer>
                 </DockPanel>
             </Border>

@@ -39,13 +39,22 @@
     <Application.Styles>
         <FluentTheme />
 
-        <!-- ClamAV Card Styling -->
         <Style Selector="Border.clamav-card">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="18"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.clamav-card:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
         </Style>
 
         <Style Selector="Border.action-tile">
@@ -54,6 +63,17 @@
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Padding" Value="16"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+
+        <Style Selector="Border.action-tile:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
         </Style>
 
         <!-- Primary ClamAV Red Action Button -->
@@ -64,6 +84,11 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="16,9"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
         </Style>
         <Style Selector="Button.clamav-primary:pointerover">
             <Setter Property="Background" Value="#D92E4B"/>
@@ -76,6 +101,16 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.clamav-secondary:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
         </Style>
 
         <Style Selector="Button.clamav-danger">
@@ -85,6 +120,14 @@
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="14,8"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.clamav-danger:pointerover">
+            <Setter Property="Background" Value="#B91C1C"/>
         </Style>
     </Application.Styles>
 </Application>

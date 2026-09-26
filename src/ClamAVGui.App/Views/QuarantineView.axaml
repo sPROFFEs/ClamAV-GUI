@@ -31,10 +31,11 @@
                     </Border>
 
                     <!-- Empty State -->
-                    <TextBlock Text="No quarantined threats. Your quarantine vault is empty."
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Opacity="0.5" FontSize="13" Margin="30"
-                               IsVisible="{Binding !Items.Count}"/>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30" Spacing="10" IsVisible="{Binding !Items.Count}">
+                        <PathIcon Data="{StaticResource IconShieldCheck}" Width="48" Height="48" Foreground="{StaticResource ClamAvSuccess}" Opacity="0.7" HorizontalAlignment="Center" />
+                        <TextBlock Text="No quarantined threats. Your quarantine vault is empty."
+                                   Opacity="0.5" FontSize="13" HorizontalAlignment="Center" />
+                    </StackPanel>
 
                     <ListBox ItemsSource="{Binding Items}" Background="Transparent" IsVisible="{Binding Items.Count}">
                         <ListBox.ItemTemplate>

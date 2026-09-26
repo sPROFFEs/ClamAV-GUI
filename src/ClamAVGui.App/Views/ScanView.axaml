@@ -66,10 +66,11 @@
                     </Border>
 
                     <!-- Empty State -->
-                    <TextBlock Text="No active scan results. Click 'Quick scan' or select a file/folder to scan."
-                               HorizontalAlignment="Center" VerticalAlignment="Center"
-                               Opacity="0.5" FontSize="13" Margin="30"
-                               IsVisible="{Binding !Results.Count}"/>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Margin="30" Spacing="10" IsVisible="{Binding !Results.Count}">
+                        <PathIcon Data="{StaticResource IconScan}" Width="48" Height="48" Foreground="{DynamicResource SystemControlForegroundBaseLowBrush}" Opacity="0.5" HorizontalAlignment="Center" />
+                        <TextBlock Text="No active scan results. Click 'Quick scan' or select a file/folder to scan."
+                                   Opacity="0.5" FontSize="13" HorizontalAlignment="Center" />
+                    </StackPanel>
 
                     <ListBox ItemsSource="{Binding Results}" Background="Transparent" IsVisible="{Binding Results.Count}">
                         <ListBox.ItemTemplate>

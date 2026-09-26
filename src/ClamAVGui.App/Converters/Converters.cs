@@ -26,7 +26,12 @@ public class NullToBoolConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        return value != null;
+        bool isNull = value == null || (value is string s && string.IsNullOrWhiteSpace(s));
+        if (parameter is string param && param.Equals("Invert", StringComparison.OrdinalIgnoreCase))
+        {
+            return isNull;
+        }
+        return !isNull;
     }
 
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
