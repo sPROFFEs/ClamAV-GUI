@@ -1,5 +1,5 @@
 # ClamAV GUI Windows PowerShell Installer
-# Run via: irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalonia/install.ps1 | iex
+# Run via: irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/main/install.ps1 | iex
 
 $ErrorActionPreference = 'Stop'
 

@@ -28,7 +28,7 @@ case "${OS}" in
     *)
         echo -e "${RED}Unsupported Operating System: ${OS}${RESET}"
         echo "For Windows, run the PowerShell one-liner:"
-        echo "  irm https://raw.githubusercontent.com/${REPO}/migration/avalonia/install.ps1 | iex"
+        echo "  irm https://raw.githubusercontent.com/${REPO}/main/install.ps1 | iex"
         exit 1
         ;;
 esac
