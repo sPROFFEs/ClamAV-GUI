@@ -129,5 +129,26 @@
         <Style Selector="Button.clamav-danger:pointerover">
             <Setter Property="Background" Value="#B91C1C"/>
         </Style>
+
+        <!-- Sidebar Navigation Items Styling -->
+        <Style Selector="ListBox.sidebar ListBoxItem">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="6,2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.15"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="ListBox.sidebar ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumBrush}"/>
+        </Style>
+        <Style Selector="ListBox.sidebar ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="#33C41E3A"/> <!-- Transparent Red -->
+        </Style>
+        <Style Selector="ListBox.sidebar ListBoxItem:selected PathIcon">
+            <Setter Property="Foreground" Value="#EF4444"/> <!-- Bright Red for Selected -->
+        </Style>
     </Application.Styles>
 </Application>

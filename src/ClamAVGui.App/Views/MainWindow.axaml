@@ -41,17 +41,22 @@
             <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                     BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,1,0"
                     Width="{Binding SidebarWidth}" ClipToBounds="True">
+                <Border.Transitions>
+                    <Transitions>
+                        <DoubleTransition Property="Width" Duration="0:0:0.25" Easing="CubicEaseOut"/>
+                    </Transitions>
+                </Border.Transitions>
                 <Grid RowDefinitions="*,Auto">
                     <!-- Navigation Items List -->
                     <ScrollViewer Grid.Row="0" Margin="4,10">
-                        <ListBox ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
+                        <ListBox Classes="sidebar" ItemsSource="{Binding NavItems}" SelectedIndex="{Binding SelectedTabIndex}"
                                  Background="Transparent" SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:NavItem">
-                                    <Grid ColumnDefinitions="32,*" Margin="4,4">
+                                    <Grid ColumnDefinitions="36,*" Margin="4,8">
                                         <PathIcon Grid.Column="0" Data="{Binding IconGeometry}"
                                                   Width="18" Height="18" Foreground="#C41E3A" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-                                        <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="13" VerticalAlignment="Center"
+                                        <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis" Margin="4,0,0,0"/>
                                     </Grid>
                                 </DataTemplate>
