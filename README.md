@@ -31,7 +31,7 @@ Available natively on:
 Run the universal installer script in your terminal:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalonia/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/main/install.sh | bash
 ```
 
 *This automatically detects your OS and architecture (`x86_64` or `arm64`), downloads the latest release, installs it to `~/.local/share/clamav-gui`, creates the `clamav-gui` command, and registers the app in your desktop launcher.*
@@ -43,7 +43,7 @@ curl -sSL https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalon
 Run the PowerShell installer:
 
 ```powershell
-irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/migration/avalonia/install.ps1 | iex
+irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/main/install.ps1 | iex
 ```
 
 *This installs ClamAV GUI to `%LOCALAPPDATA%\ClamAV-GUI`, creates a Start Menu shortcut, and adds it to your user `PATH`.*
@@ -73,7 +73,7 @@ Standalone portable binaries are available on the [Releases](https://github.com/
 Requirements: [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 
 ```bash
-git clone -b migration/avalonia https://github.com/sPROFFEs/ClamAV-GUI.git
+git clone https://github.com/sPROFFEs/ClamAV-GUI.git
 cd ClamAV-GUI
 
 # Build and run tests
@@ -88,7 +88,7 @@ dotnet run --project src/ClamAVGui.App/ClamAVGui.App.csproj
 
 ## Contributing
 
-Contributions are welcome! Please open an issue for bugs or feature suggestions, and submit pull requests targeting the `migration/avalonia` branch.
+Contributions are welcome! Please open an issue for bugs or feature suggestions, and submit pull requests targeting the `main` branch.
 
 ## License
 
