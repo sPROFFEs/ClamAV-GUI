@@ -81,6 +81,7 @@ public sealed record ProcessResult
 public sealed record UpdateResult
 {
     public required bool Success { get; init; }
+    public bool IsManagedBySystem { get; init; }
     public bool IsAlreadyUpToDate { get; init; }
     public int? SignaturesCount { get; init; }
     public string? Version { get; init; }

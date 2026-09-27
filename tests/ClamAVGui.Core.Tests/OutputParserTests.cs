@@ -6,6 +6,13 @@ namespace ClamAVGui.Core.Tests;
 
 public class OutputParserTests
 {
+    [Fact]
+    public void UpdateErrorPrintedToStdoutIsVisible()
+    {
+        var result = new ClamAvOutputParser().ParseUpdateOutput("ERROR: Permission denied", "", 1, false);
+        Assert.False(result.Success);
+        Assert.Contains("Permission denied", result.Error);
+    }
     private readonly ClamAvOutputParser _parser = new();
 
     [Fact]

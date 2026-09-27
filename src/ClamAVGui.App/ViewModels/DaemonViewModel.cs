@@ -84,17 +84,12 @@ public sealed partial class DaemonViewModel : ViewModelBase
                 return;
             }
 
-            var config = await _configProvider.LoadAsync(installation);
-            var endpoint = config.DaemonEndpoint ?? (_platformService.Platform == PlatformKind.Windows
+            ClamdEndpoint endpoint = _platformService.Platform == PlatformKind.Windows
                 ? new TcpClamdEndpoint("127.0.0.1", 3310)
-                : new UnixClamdEndpoint(Path.Combine(_platformService.RuntimeDirectory, "clamd.ctl")));
+                : new UnixClamdEndpoint(Path.Combine(_platformService.RuntimeDirectory, "clamd.ctl"));
 
-            var configPath = config.ConfigPath;
-            if (string.IsNullOrWhiteSpace(configPath) || !File.Exists(configPath))
-            {
-                // Create managed config
-                configPath = await _configProvider.InitializeManagedConfigAsync(installation, _platformService.UserDataDirectory, endpoint);
-            }
+            var configPath = await _configProvider.InitializeManagedConfigAsync(
+                installation, _platformService.UserDataDirectory, endpoint);
 
             await _daemon.StartManagedAsync(configPath, endpoint);
             StatusMessage = "Daemon started successfully.";

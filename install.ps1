@@ -12,27 +12,19 @@ $GitHubApi = "https://api.github.com/repos/$Repo/releases"
 Write-Host "=== ClamAV GUI Windows Installer ===" -ForegroundColor Cyan
 
 # 1. Architecture Check
-$Arch = "win-x64"
 if (-not [System.Environment]::Is64BitOperatingSystem) {
     Write-Error "32-bit Windows is not supported. Please run on 64-bit Windows."
 }
+$Arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64') { 'win-arm64' } else { 'win-x64' }
 
 # 2. Determine Download URL
 Write-Host "Fetching latest release information..." -ForegroundColor Gray
-$DownloadUrl = "https://github.com/$Repo/releases/download/v2.0.0-beta.1/ClamAV-GUI-v2.0.0-beta-$Arch.zip"
-
-try {
-    $ReleaseInfo = Invoke-RestMethod -Uri $GitHubApi -Headers @{ "Accept" = "application/vnd.github.v3+json"; "User-Agent" = "ClamAV-GUI-Installer" } -TimeoutSec 10 -ErrorAction SilentlyContinue
-    if ($ReleaseInfo -and $ReleaseInfo.Count -gt 0) {
-        $Asset = $ReleaseInfo[0].assets | Where-Object { $_.name -like "*$Arch*.zip" } | Select-Object -First 1
-        if ($Asset) {
-            $DownloadUrl = $Asset.browser_download_url
-        }
-    }
+$ReleaseInfo = Invoke-RestMethod -Uri "$GitHubApi`?per_page=20" -Headers @{ "Accept" = "application/vnd.github+json"; "User-Agent" = "ClamAV-GUI-Installer" } -TimeoutSec 30
+$Asset = $ReleaseInfo | ForEach-Object { $_.assets } | Where-Object { $_.name -match "-$Arch\.zip$" } | Select-Object -First 1
+if (-not $Asset) {
+    throw "No published release package was found for $Arch."
 }
-catch {
-    # Silently use direct fallback URL
-}
+$DownloadUrl = $Asset.browser_download_url
 
 Write-Host "Downloading ClamAV GUI from: $DownloadUrl" -ForegroundColor Gray
 $TempZip = Join-Path $env:TEMP "ClamAV-GUI-$Arch-$([guid]::NewGuid().ToString('N')).zip"
@@ -48,13 +40,34 @@ catch {
 $InstallDir = Join-Path $env:LOCALAPPDATA "ClamAV-GUI"
 Write-Host "Installing to: $InstallDir" -ForegroundColor Gray
 
-if (Test-Path $InstallDir) {
-    Remove-Item -Path $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
-}
-New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+$StagingDir = "$InstallDir.staging.$([guid]::NewGuid().ToString('N'))"
+$BackupDir = "$InstallDir.backup.$([guid]::NewGuid().ToString('N'))"
+try {
+    Expand-Archive -Path $TempZip -DestinationPath $StagingDir -Force
+    if (-not (Test-Path -LiteralPath (Join-Path $StagingDir "ClamAVGui.App.exe") -PathType Leaf)) {
+        throw "The release package does not contain ClamAVGui.App.exe."
+    }
 
-Expand-Archive -Path $TempZip -DestinationPath $InstallDir -Force
-Remove-Item -Path $TempZip -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $InstallDir) {
+        Move-Item -LiteralPath $InstallDir -Destination $BackupDir
+    }
+    try {
+        Move-Item -LiteralPath $StagingDir -Destination $InstallDir
+    }
+    catch {
+        if (Test-Path -LiteralPath $BackupDir) {
+            Move-Item -LiteralPath $BackupDir -Destination $InstallDir
+        }
+        throw
+    }
+    if (Test-Path -LiteralPath $BackupDir) {
+        Remove-Item -LiteralPath $BackupDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+finally {
+    Remove-Item -LiteralPath $TempZip -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $StagingDir -Recurse -Force -ErrorAction SilentlyContinue
+}
 
 $ExePath = Join-Path $InstallDir "ClamAVGui.App.exe"
 

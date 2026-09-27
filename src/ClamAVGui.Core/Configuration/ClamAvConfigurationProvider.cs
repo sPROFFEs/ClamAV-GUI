@@ -89,8 +89,15 @@ public sealed class ClamAvConfigurationProvider : IClamAvConfigurationProvider
         Directory.CreateDirectory(targetDirectory);
         var dbDir = installation.DatabaseDirectory ?? Path.Combine(targetDirectory, "database");
         Directory.CreateDirectory(dbDir);
-        var logDir = installation.LogDirectory ?? targetDirectory;
+        // A managed daemon runs as the desktop user. System log directories are
+        // commonly owned by the clamav account and cannot be written here.
+        var logDir = targetDirectory;
         Directory.CreateDirectory(logDir);
+
+        if (defaultEndpoint is UnixClamdEndpoint socket)
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(socket.SocketPath)!);
+        }
 
         var clamdConfPath = Path.Combine(targetDirectory, "clamd.conf");
         var freshclamConfPath = Path.Combine(targetDirectory, "freshclam.conf");
@@ -131,7 +138,8 @@ public sealed class ClamAvConfigurationProvider : IClamAvConfigurationProvider
     private static async Task WriteFileAtomicallyAsync(string destinationPath, string content, CancellationToken cancellationToken)
     {
         var tempFile = destinationPath + ".tmp." + Guid.NewGuid().ToString("N");
-        await File.WriteAllTextAsync(tempFile, content, Encoding.UTF8, cancellationToken);
+        // clamd/freshclam treat a UTF-8 BOM as part of the first directive.
+        await File.WriteAllTextAsync(tempFile, content, new UTF8Encoding(false), cancellationToken);
         File.Move(tempFile, destinationPath, overwrite: true);
     }
 }

@@ -1,4 +1,6 @@
 using ClamAVGui.Core.Parsing;
+using ClamAVGui.Core.Configuration;
+using ClamAVGui.Core.Models;
 using Xunit;
 
 namespace ClamAVGui.Core.Tests;
@@ -6,6 +8,37 @@ namespace ClamAVGui.Core.Tests;
 public class ConfigParserTests
 {
     private readonly ClamAvConfigParser _parser = new();
+
+    [Fact]
+    public async Task ManagedConfig_UsesUserOwnedLogAndSocketDirectoriesWithoutBom()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "clamav-config-test-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var endpoint = new UnixClamdEndpoint(Path.Combine(directory, "runtime", "clamd.ctl"));
+            var installation = new ClamAvInstallation
+            {
+                ClamScanPath = "/usr/bin/clamscan",
+                DatabaseDirectory = "/var/lib/clamav",
+                LogDirectory = "/var/log/clamav",
+                Version = "test",
+                Source = ClamAvInstallationSource.System
+            };
+
+            var path = await new ClamAvConfigurationProvider(_parser)
+                .InitializeManagedConfigAsync(installation, directory, endpoint);
+            var bytes = await File.ReadAllBytesAsync(path);
+            var text = await File.ReadAllTextAsync(path);
+
+            Assert.Equal((byte)'D', bytes[0]);
+            Assert.Contains($"LogFile \"{Path.Combine(directory, "clamd.log")}\"", text);
+            Assert.True(Directory.Exists(Path.Combine(directory, "runtime")));
+        }
+        finally
+        {
+            if (Directory.Exists(directory)) Directory.Delete(directory, recursive: true);
+        }
+    }
 
     [Fact]
     public void Parse_ExactDirectiveMatching_DoesNotConfuseLogFileWithLogFileMaxSize()

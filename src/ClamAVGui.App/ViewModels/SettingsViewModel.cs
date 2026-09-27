@@ -163,7 +163,18 @@ public sealed partial class SettingsViewModel : ViewModelBase
             if (success)
             {
                 await LoadSettingsAsync();
-                await _notificationService.ShowAsync("ClamAV Engine", "ClamAV engine has been installed and configured successfully!");
+                var installation = await _binaryLocator.FindInstallationAsync(CustomClamAvPath);
+                if (installation == null)
+                {
+                    EngineInstallStatus = "Package manager finished, but clamscan was not found. Check the installation and try Auto-Detect.";
+                    await _notificationService.ShowAsync("ClamAV Engine", EngineInstallStatus, NotificationSeverity.Warning);
+                    return;
+                }
+
+                CustomClamAvPath = installation.RootDirectory ?? string.Empty;
+                await SaveSettingsAsync();
+                EngineInstallStatus = $"ClamAV detected at {installation.ClamScanPath}. You can start scanning now.";
+                await _notificationService.ShowAsync("ClamAV Engine", EngineInstallStatus);
             }
             else
             {

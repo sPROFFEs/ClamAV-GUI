@@ -69,6 +69,13 @@ public sealed partial class UpdateViewModel : ViewModelBase
                 await _historyService.LogEventAsync("Update", "Database already up to date.");
                 await _notificationService.ShowAsync("ClamAV Update", "Database is up to date.");
             }
+            else if (result.IsManagedBySystem)
+            {
+                StatusText = "System updater restarted. ClamAV will check for new definitions.";
+                OutputText = result.Output;
+                await _historyService.LogEventAsync("Update", "System clamav-freshclam updater restarted.");
+                await _notificationService.ShowAsync("ClamAV Update", StatusText);
+            }
             else
             {
                 StatusText = $"Update successful! (Signatures: {result.SignaturesCount?.ToString() ?? "Updated"})";

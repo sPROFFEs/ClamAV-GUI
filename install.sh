@@ -58,7 +58,8 @@ RELEASE_JSON=$(curl -sSL --retry 3 --connect-timeout 15 --max-time 60 \
 DOWNLOAD_URL=$(echo "${RELEASE_JSON}" | grep -oE "https://github.com/${REPO}/releases/download/[^\" ]*${OS_TAG}-${ARCH_TAG}\\.tar\\.gz" | head -n 1 || true)
 
 if [ -z "${DOWNLOAD_URL}" ]; then
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v2.0.0-beta.1/ClamAV-GUI-v2.0.0-beta-${OS_TAG}-${ARCH_TAG}.tar.gz"
+    echo -e "${RED}No published release was found for ${OS_TAG}-${ARCH_TAG}. Please try again later.${RESET}"
+    exit 1
 fi
 
 echo -e "Downloading from: ${BLUE}${DOWNLOAD_URL}${RESET}"

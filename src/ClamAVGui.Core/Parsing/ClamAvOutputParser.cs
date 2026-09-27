@@ -209,7 +209,7 @@ public sealed partial class ClamAvOutputParser : IClamAvOutputParser
             SignaturesCount = sigs,
             Version = ver,
             Output = stdout,
-            Error = stderr,
+            Error = hasError && string.IsNullOrWhiteSpace(stderr) ? stdout.Trim() : stderr,
             ExitCode = exitCode,
             WasCancelled = false
         };

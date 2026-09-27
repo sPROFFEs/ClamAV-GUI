@@ -77,7 +77,18 @@ public sealed partial class DashboardViewModel : ViewModelBase
         if (installation != null)
         {
             IsClamAvConfigured = true;
-            StatusText = $"Engine Active ({installation.Version})";
+            var hasDefinitions = false;
+            try
+            {
+                hasDefinitions = !string.IsNullOrWhiteSpace(installation.DatabaseDirectory) &&
+                    Directory.Exists(installation.DatabaseDirectory) &&
+                    Directory.EnumerateFiles(installation.DatabaseDirectory, "*.c?d").Any();
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // A system database can exist without being readable by this user.
+            }
+            StatusText = hasDefinitions ? "ClamAV ready for on-demand scans" : "ClamAV found; virus definitions are missing";
         }
         else
         {
@@ -87,7 +98,7 @@ public sealed partial class DashboardViewModel : ViewModelBase
 
         var health = await _daemon.CheckHealthAsync();
         IsClamDRunning = health.EndpointReachable && health.ProtocolHealthy;
-        VirusDefinitionsVersion = health.Version ?? (installation != null ? "Ready" : "N/A");
+        VirusDefinitionsVersion = health.Version ?? (installation != null ? "Installed" : "N/A");
         DaemonStats = health.Stats ?? (IsClamDRunning ? "Running" : "Stopped");
 
         var events = await _historyService.LoadHistoryAsync();

@@ -31,8 +31,8 @@
                         <Image Source="avares://ClamAVGui.App/Assets/icon.png" Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Border>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="ClamAV Endpoint Active" FontSize="20" FontWeight="Bold" Foreground="#10B981"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="Open-source antivirus protection is keeping your files and directories secure." FontSize="13" Opacity="0.75" Margin="0,4,0,10"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding StatusText}" FontSize="20" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="Run an on-demand scan to check files. The daemon is optional." FontSize="13" Opacity="0.75" Margin="0,4,0,10"/>
 
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="16">
                         <TextBlock Text="{Binding TotalScans, StringFormat='Total scans run: {0}'}" FontSize="12" Opacity="0.7"/>

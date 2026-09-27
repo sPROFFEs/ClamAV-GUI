@@ -48,7 +48,7 @@ public sealed class LinuxPlatformService : IPlatformService
             {
                 return Path.Combine(xdg, "clamav-gui");
             }
-            return Path.Combine(Path.GetTempPath(), "clamav-gui");
+            return Path.Combine(UserCacheDirectory, "runtime");
         }
     }
 

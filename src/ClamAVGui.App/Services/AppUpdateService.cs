@@ -108,7 +108,7 @@ public sealed class AppUpdateService : IAppUpdateService
         {
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                var scriptUrl = $"https://raw.githubusercontent.com/{Repo}/migration/avalonia/install.ps1";
+                var scriptUrl = $"https://raw.githubusercontent.com/{Repo}/main/install.ps1";
                 var psCmd = $"irm {scriptUrl} | iex; Start-Process (Join-Path $env:LOCALAPPDATA 'ClamAV-GUI\\ClamAVGui.App.exe')";
 
                 Process.Start(new ProcessStartInfo
@@ -123,8 +123,8 @@ public sealed class AppUpdateService : IAppUpdateService
             }
             else
             {
-                var scriptUrl = $"https://raw.githubusercontent.com/{Repo}/migration/avalonia/install.sh";
-                var tempScript = Path.Combine(Path.GetTempPath(), "clamav-update.sh");
+                var scriptUrl = $"https://raw.githubusercontent.com/{Repo}/main/install.sh";
+                var tempScript = Path.Combine(Path.GetTempPath(), $"clamav-update-{Guid.NewGuid():N}.sh");
 
                 using (var client = new HttpClient())
                 {

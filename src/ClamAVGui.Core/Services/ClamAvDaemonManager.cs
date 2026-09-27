@@ -43,10 +43,16 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
     public async Task<ClamdHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        ClamdEndpoint endpoint;
+        ClamdEndpoint? endpoint;
         try
         {
-            endpoint = await _endpointResolver();
+            lock (_lock)
+            {
+                endpoint = _managedProcess != null && !_managedProcess.Completion.IsCompleted
+                    ? _currentInstance!.Endpoint
+                    : null;
+            }
+            endpoint ??= await _endpointResolver();
         }
         catch (Exception ex)
         {
@@ -62,12 +68,9 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
         }
 
         bool isOwned;
-        int? pid;
-
         lock (_lock)
         {
             isOwned = _managedProcess != null && !_managedProcess.Completion.IsCompleted;
-            pid = isOwned ? _managedProcess!.ProcessId : null;
         }
 
         try
@@ -91,7 +94,7 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
                 return new ClamdHealth
                 {
-                    ProcessExists = pid.HasValue || true,
+                    ProcessExists = true,
                     EndpointReachable = true,
                     ProtocolHealthy = true,
                     DatabaseLoaded = !string.IsNullOrWhiteSpace(version),
@@ -168,6 +171,11 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
             throw new ClamAvException(ClamAvErrorCode.ClamAvExecutionFailed, "Failed to launch clamd process.");
         }
 
+        // Drain both pipes while clamd loads its database. Otherwise its output
+        // can fill a pipe and prevent startup, and failures lose their details.
+        var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
+        var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+
         var managed = new ManagedDaemonProcess(process, _logger);
 
         lock (_lock)
@@ -218,7 +226,10 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
             if (process.HasExited)
             {
-                throw new ClamAvException(ClamAvErrorCode.DaemonUnavailable, $"clamd exited unexpectedly with code {process.ExitCode}.");
+                var error = (await stderrTask).Trim();
+                if (string.IsNullOrWhiteSpace(error)) error = (await stdoutTask).Trim();
+                throw new ClamAvException(ClamAvErrorCode.DaemonUnavailable,
+                    $"clamd exited with code {process.ExitCode}. {error}".Trim());
             }
             throw new ClamAvException(ClamAvErrorCode.DaemonUnavailable, "Timed out waiting for clamd to respond to PING.");
         }
@@ -266,7 +277,14 @@ public sealed class ClamAvDaemonManager : IClamAvDaemon
 
     public async Task<string> ReloadDatabaseAsync(CancellationToken cancellationToken = default)
     {
-        var endpoint = await _endpointResolver();
+        ClamdEndpoint? endpoint;
+        lock (_lock)
+        {
+            endpoint = _managedProcess != null && !_managedProcess.Completion.IsCompleted
+                ? _currentInstance!.Endpoint
+                : null;
+        }
+        endpoint ??= await _endpointResolver();
         return await _protocol.ReloadAsync(endpoint, TimeSpan.FromSeconds(5), cancellationToken);
     }
 }

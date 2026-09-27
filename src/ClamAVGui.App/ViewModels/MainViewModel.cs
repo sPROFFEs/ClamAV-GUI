@@ -117,4 +117,12 @@ public sealed partial class MainViewModel : ViewModelBase
             await Settings.CheckAppUpdatesAsync();
         });
     }
+
+    partial void OnSelectedTabIndexChanged(int value)
+    {
+        if (value == 0)
+        {
+            _ = Dashboard.RefreshAsync();
+        }
+    }
 }
