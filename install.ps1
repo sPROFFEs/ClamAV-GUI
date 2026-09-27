@@ -102,5 +102,5 @@ try {
 catch {
 }
 
-Write-Host "`n✓ ClamAV GUI has been successfully installed!" -ForegroundColor Green
+Write-Host "`nClamAV GUI has been successfully installed!" -ForegroundColor Green
 Write-Host "Launch it from the Start Menu or run: $ExePath"

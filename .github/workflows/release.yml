@@ -84,9 +84,25 @@ jobs:
           path: ClamAV-GUI-${{ github.ref_name }}-${{ matrix.rid }}.${{ matrix.archive }}
           if-no-files-found: error
 
+  windows-installer-parse:
+    name: Validate Windows installer syntax
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Parse installer with Windows PowerShell
+        shell: powershell
+        run: |
+          $Tokens = $null
+          $Errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path .\install.ps1), [ref]$Tokens, [ref]$Errors) | Out-Null
+          if ($Errors.Count -gt 0) {
+            throw ($Errors | Out-String)
+          }
+
   publish:
     name: Publish GitHub Release
-    needs: package
+    needs: [package, windows-installer-parse]
     runs-on: ubuntu-latest
     steps:
       - name: Download release packages
