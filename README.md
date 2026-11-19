@@ -58,9 +58,15 @@ irm https://raw.githubusercontent.com/sPROFFEs/ClamAV-GUI/main/install.ps1 | iex
 - ☣️ **Quarantine Vault**: Isolated threat storage with SHA-256 integrity checks, file size reporting, and safe restore/delete actions.
 - ⚙️ **Daemon Control (`clamd`)**: Start, stop, and reload the ClamAV daemon using secure local loopback sockets without risking external system daemons.
 - 👁️ **Real-Time Monitoring**: Debounced filesystem watcher for user-defined folders with inclusion filters and exclusion lists.
-- ⏰ **Scheduled Scans**: Configure daily automated background scans using native platform schedulers.
+- ⏰ **Scheduled Scans**: Configure daily scans with Windows Task Scheduler.
 - 🩺 **Diagnostics & Health Check**: Automatic validation of engine components, socket connections, and privacy-redacted diagnostic export.
 - 🛠️ **Auto-Detection**: Auto-detects system ClamAV binaries across `$PATH` and standard platform directories in one click.
+
+### Offline signatures
+
+Copy your ClamAV definition files into a folder readable by your account. On Linux, the GUI checks standard locations including `/usr/local/share/clamav`. For another location, enter the path under **Settings → Signature database folder** and select **Save settings**. In JSON, the optional setting is `CustomDatabaseDirectory`.
+
+On-demand scans and the daemon started by the GUI use this folder. Copy new definitions into the folder when you update offline. An external daemon continues to use its own configuration.
 
 ---
 

@@ -57,7 +57,7 @@
                     </Border>
 
                     <StackPanel Spacing="4" IsVisible="{Binding EngineInstallStatus, Converter={StaticResource NullToBoolConverter}}">
-                        <TextBlock Text="{Binding EngineInstallStatus}" FontWeight="SemiBold" FontSize="12"/>
+                        <TextBlock Text="{Binding EngineInstallStatus}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap"/>
                         <ProgressBar IsIndeterminate="{Binding IsInstallingEngine}" IsVisible="{Binding IsInstallingEngine}" Height="4"/>
                     </StackPanel>
                 </StackPanel>
@@ -68,8 +68,19 @@
                 <StackPanel Spacing="16">
                     <Grid ColumnDefinitions="*,Auto">
                         <TextBlock Grid.Column="0" Text="Engine and Storage Directories" FontWeight="SemiBold" FontSize="16"/>
-                        <Button Grid.Column="1" Classes="clamav-secondary" Content="🔍 Auto-detect paths" Command="{Binding AutoDetectClamAvCommand}"/>
+                        <Button Grid.Column="1" Classes="clamav-secondary" Content="Find ClamAV" Command="{Binding AutoDetectClamAvCommand}"/>
                     </Grid>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="Signature database folder" FontWeight="SemiBold"/>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Text="{Binding CustomDatabaseDirectory}" Watermark="Automatic detection" Margin="0,0,8,0"
+                                     AutomationProperties.Name="Signature database folder"/>
+                            <Button Grid.Column="1" Classes="clamav-secondary" Content="Browse…" Command="{Binding BrowseDatabaseDirectoryCommand}"/>
+                        </Grid>
+                        <TextBlock Text="For offline updates, choose the folder where you copy your signatures. Leave blank for automatic detection."
+                                   FontSize="12" Opacity="0.8" TextWrapping="Wrap"/>
+                    </StackPanel>
 
                     <StackPanel Spacing="6">
                         <TextBlock Text="ClamAV binary directory (Leave blank to use system PATH)" FontSize="12" Opacity="0.8"/>
@@ -111,12 +122,12 @@
 
             <!-- Save Actions -->
             <StackPanel Orientation="Horizontal" Spacing="12">
-                <Button Classes="clamav-primary" Content="💾 Save Settings" Command="{Binding SaveSettingsCommand}"/>
-                <Button Classes="clamav-secondary" Content="🔄 Reload Settings" Command="{Binding LoadSettingsCommand}"/>
+                <Button Classes="clamav-primary" Content="Save settings" Command="{Binding SaveSettingsCommand}"/>
+                <Button Classes="clamav-secondary" Content="Reload settings" Command="{Binding LoadSettingsCommand}"/>
             </StackPanel>
 
             <Border Classes="clamav-card" IsVisible="{Binding StatusMessage, Converter={StaticResource NullToBoolConverter}}">
-                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13"/>
+                <TextBlock Text="{Binding StatusMessage}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap"/>
             </Border>
         </StackPanel>
     </ScrollViewer>

@@ -16,6 +16,21 @@ public class QuarantineTests : IDisposable
     }
 
     [Fact]
+    public async Task RestoreKeepsBothFilesWhenOriginalPathIsOccupied()
+    {
+        var path = Path.Combine(_testDir, "occupied.txt");
+        await File.WriteAllTextAsync(path, "quarantined contents");
+        var item = await _service.QuarantineFileAsync(path, "Test");
+        await File.WriteAllTextAsync(path, "replacement");
+
+        await Assert.ThrowsAsync<IOException>(() => _service.RestoreItemAsync(item.Id));
+
+        Assert.Equal("replacement", await File.ReadAllTextAsync(path));
+        Assert.Equal("quarantined contents", await File.ReadAllTextAsync(item.QuarantinePath));
+        Assert.Single(await _service.LoadItemsAsync());
+    }
+
+    [Fact]
     public async Task QuarantineFile_MovesFile_GeneratesSha256_AndRestoresSuccessfully()
     {
         var sourceFile = Path.Combine(_testDir, "suspicious.txt");

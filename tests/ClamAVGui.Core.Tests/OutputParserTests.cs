@@ -78,6 +78,22 @@ Time: 0.010 sec (0 m 0 s)";
         Assert.Equal("Eicar-Test-Signature FOUND", parsed.Value.Status);
     }
 
+    [Theory]
+    [InlineData("Engine version: 1.4.6")]
+    [InlineData("Scanned files: 1")]
+    [InlineData("End Date: 2026:11:19 12:00:00")]
+    public void TryParseLine_IgnoresSummaryFields(string line)
+    {
+        Assert.Null(_parser.TryParseLine(line));
+    }
+
+    [Fact]
+    public void TryParseLine_HandlesColonInPath()
+    {
+        var parsed = _parser.TryParseLine("/tmp/file: name: OK");
+        Assert.Equal(("/tmp/file: name", "OK"), parsed);
+    }
+
     [Fact]
     public void Parse_ScanErrorExitCode_ReturnsErrorVerdict()
     {

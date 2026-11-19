@@ -44,7 +44,7 @@ public sealed class MacOsPlatformService : IPlatformService
         SupportsFreshClam = true,
         SupportsNativeOnAccess = false,
         SupportsReactiveMonitoring = true,
-        SupportsScheduling = true,
+        SupportsScheduling = false,
         SupportsNotifications = true,
         SupportsTray = true,
         SupportsStartupRegistration = true
@@ -214,11 +214,11 @@ public sealed class MacOsSchedulerService : ISchedulerService
 
     public Task<string> CreateOrUpdateDailyScanTaskAsync(string targetPath, TimeSpan timeOfDay, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult($"Scheduled scan configured for {timeOfDay.Hours:00}:{timeOfDay.Minutes:00}");
+        return Task.FromResult("Scheduled scans are unavailable on this platform.");
     }
 
     public Task<string> RemoveDailyScanTaskAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult("Scheduled scan removed.");
+        return Task.FromResult("Scheduled scans are unavailable on this platform.");
     }
 }

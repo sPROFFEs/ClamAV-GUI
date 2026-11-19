@@ -51,10 +51,16 @@ public sealed class ClamScanBackend : IScanBackend
 
         var arguments = new List<string> { "--stdout" };
 
-        if (!string.IsNullOrWhiteSpace(installation.DatabaseDirectory) && Directory.Exists(installation.DatabaseDirectory))
+        if (installation.UsesCustomDatabaseDirectory ||
+            (!string.IsNullOrWhiteSpace(installation.DatabaseDirectory) && Directory.Exists(installation.DatabaseDirectory)))
         {
+            if (!Directory.Exists(installation.DatabaseDirectory))
+            {
+                throw new ClamAvException(ClamAvErrorCode.DatabaseMissing,
+                    $"The configured signature database directory was not found: {installation.DatabaseDirectory}");
+            }
             arguments.Add("--database");
-            arguments.Add(installation.DatabaseDirectory);
+            arguments.Add(installation.DatabaseDirectory!);
         }
 
         if (request.Profile.Recursive)

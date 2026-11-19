@@ -75,6 +75,7 @@ public sealed partial class MainViewModel : ViewModelBase
         Scheduler = scheduler;
         Diagnostics = diagnostics;
         Settings = settings;
+        Settings.EngineSettingsSaved += Dashboard.RefreshAsync;
 
         if (notificationService is AvaloniaNotificationService notify)
         {
@@ -111,18 +112,18 @@ public sealed partial class MainViewModel : ViewModelBase
         await Monitoring.LoadSettingsAsync();
         await Scheduler.LoadAsync();
         await Diagnostics.RefreshReportAsync();
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(2000);
-            await Settings.CheckAppUpdatesAsync();
-        });
+        Settings.CheckAppUpdatesCommand.Execute(null);
     }
 
     partial void OnSelectedTabIndexChanged(int value)
     {
-        if (value == 0)
+        switch (value)
         {
-            _ = Dashboard.RefreshAsync();
+            case 0: Dashboard.RefreshCommand.Execute(null); break;
+            case 3: History.LoadHistoryCommand.Execute(null); break;
+            case 4: Quarantine.LoadCommand.Execute(null); break;
+            case 5 when !Daemon.IsBusy: Daemon.RefreshStatusCommand.Execute(null); break;
+            case 8: Diagnostics.RefreshReportCommand.Execute(null); break;
         }
     }
 }

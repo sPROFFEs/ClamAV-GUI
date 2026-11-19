@@ -5,41 +5,20 @@
              x:DataType="vm:DashboardViewModel">
     <ScrollViewer Margin="36,28">
         <StackPanel Spacing="24" MaxWidth="900" HorizontalAlignment="Left">
-            <!-- Page Title -->
-            <StackPanel Spacing="4">
-                <TextBlock Text="Protection Overview" FontSize="26" FontWeight="Bold"/>
-                <TextBlock Text="System protection state, active scanning engine, and virus signature intelligence." FontSize="13" Opacity="0.7"/>
-            </StackPanel>
+            <TextBlock Text="Protection overview" FontSize="28" FontWeight="SemiBold"/>
 
-            <!-- Alert Card when ClamAV is missing -->
-            <Border Background="#2C1217" BorderBrush="#C41E3A" BorderThickness="1.5" CornerRadius="8" Padding="20"
-                    IsVisible="{Binding !IsClamAvConfigured}">
-                <Grid ColumnDefinitions="Auto,*,Auto">
-                    <PathIcon Grid.Column="0" Data="{StaticResource IconWarning}" Width="28" Height="28" Foreground="#C41E3A" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
-                        <TextBlock Text="ClamAV Engine Not Configured" FontWeight="Bold" FontSize="15" Foreground="#EF4444"/>
-                        <TextBlock Text="To enable virus scanning and on-access defense, install or configure the ClamAV backend." FontSize="12" Opacity="0.85"/>
-                    </StackPanel>
-                    <Button Grid.Column="2" Classes="clamav-primary" Content="Install / Set up Engine" Command="{Binding OpenSettingsCommand}" VerticalAlignment="Center"/>
-                </Grid>
-            </Border>
-
-            <!-- ClamAV Hero Status Banner -->
-            <Border Classes="clamav-card" Padding="22" BorderBrush="#C41E3A" BorderThickness="1.2">
-                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
-                    <Border Grid.Column="0" Grid.RowSpan="3" Background="#1D222A" CornerRadius="12" Padding="8" Width="60" Height="60" Margin="0,0,20,0" VerticalAlignment="Center">
-                        <Image Source="avares://ClamAVGui.App/Assets/icon.png" Width="44" Height="44" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                    </Border>
-
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding StatusText}" FontSize="20" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="Run an on-demand scan to check files. The daemon is optional." FontSize="13" Opacity="0.75" Margin="0,4,0,10"/>
-
-                    <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="16">
-                        <TextBlock Text="{Binding TotalScans, StringFormat='Total scans run: {0}'}" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="•" Opacity="0.4"/>
-                        <TextBlock Text="{Binding LastUpdateTime, StringFormat='Last update: {0}'}" FontSize="12" Opacity="0.7"/>
-                        <TextBlock Text="•" Opacity="0.4"/>
-                        <TextBlock Text="{Binding VirusDefinitionsVersion, StringFormat='Signatures: {0}'}" FontSize="12" Opacity="0.7"/>
+            <Border Classes="clamav-card" Padding="22">
+                <Grid ColumnDefinitions="Auto,*">
+                    <PathIcon Data="{StaticResource IconShield}" Width="32" Height="32"
+                              Foreground="{StaticResource ClamAvRedHover}" VerticalAlignment="Top" Margin="0,4,18,0"/>
+                    <StackPanel Grid.Column="1" Spacing="8">
+                        <TextBlock Text="{Binding StatusText}" FontSize="19" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                        <SelectableTextBlock Text="{Binding DatabaseDirectory}" TextWrapping="Wrap" Opacity="0.75"
+                                             IsVisible="{Binding DatabaseDirectory, Converter={StaticResource NullToBoolConverter}}"/>
+                        <TextBlock Text="{Binding TotalScans, StringFormat='Completed scans: {0}'}" FontSize="12" Opacity="0.75"/>
+                        <TextBlock Text="{Binding LastUpdateTime, StringFormat='Last confirmed online check: {0}'}" FontSize="12" Opacity="0.75"/>
+                        <Button Classes="clamav-secondary" Content="Configure ClamAV" Command="{Binding OpenSettingsCommand}"
+                                IsVisible="{Binding !IsDatabaseReady}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -54,8 +33,7 @@
                             <TextBlock Text="Antivirus Scanner" FontWeight="SemiBold" FontSize="15"/>
                             <TextBlock Text="Scan files, directories, and archives on demand with heuristic analysis." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                                <Button Classes="clamav-primary" Content="Quick scan" Command="{Binding StartScanCommand}"/>
-                                <Button Classes="clamav-secondary" Content="Custom scan" Command="{Binding StartScanCommand}"/>
+                                <Button Classes="clamav-primary" Content="Scan files" Command="{Binding StartScanCommand}"/>
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>
@@ -66,8 +44,8 @@
                     <DockPanel>
                         <PathIcon DockPanel.Dock="Left" Data="{StaticResource IconUpdates}" Width="24" Height="24" Foreground="#C41E3A" VerticalAlignment="Top" Margin="0,2,14,0"/>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Signature Intelligence" FontWeight="SemiBold" FontSize="15"/>
-                            <TextBlock Text="Keep virus databases up to date via official ClamAV freshclam mirrors." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                            <TextBlock Text="Signature updates" FontWeight="SemiBold" FontSize="15"/>
+                            <TextBlock Text="Update online with FreshClam. Offline databases can be configured in Settings." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
                                 <Button Classes="clamav-secondary" Content="Update signatures" Command="{Binding UpdateDefinitionsCommand}"/>
                             </StackPanel>
@@ -80,10 +58,10 @@
                     <DockPanel>
                         <PathIcon DockPanel.Dock="Left" Data="{StaticResource IconMonitoring}" Width="24" Height="24" Foreground="#C41E3A" VerticalAlignment="Top" Margin="0,2,14,0"/>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Real-Time File Monitor" FontWeight="SemiBold" FontSize="15"/>
-                            <TextBlock Text="Watches directories and scans created or altered files automatically." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                            <TextBlock Text="Folder monitoring" FontWeight="SemiBold" FontSize="15"/>
+                            <TextBlock Text="Scan new and changed files in folders you choose." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                                <Button Classes="clamav-secondary" Content="Configure monitoring" Command="{Binding OpenSettingsCommand}"/>
+                                <Button Classes="clamav-secondary" Content="Configure monitoring" Command="{Binding OpenMonitoringCommand}"/>
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>
@@ -94,10 +72,10 @@
                     <DockPanel>
                         <PathIcon DockPanel.Dock="Left" Data="{StaticResource IconDaemon}" Width="24" Height="24" Foreground="#C41E3A" VerticalAlignment="Top" Margin="0,2,14,0"/>
                         <StackPanel Spacing="6">
-                            <TextBlock Text="Resident clamd Service" FontWeight="SemiBold" FontSize="15"/>
-                            <TextBlock Text="High-performance background scanner daemon offering multi-threaded scanning." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                            <TextBlock Text="ClamAV daemon" FontWeight="SemiBold" FontSize="15"/>
+                            <TextBlock Text="View the status of the optional ClamAV background service." FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
                             <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
-                                <Button Classes="clamav-secondary" Content="Daemon controls" Command="{Binding OpenSettingsCommand}"/>
+                                <Button Classes="clamav-secondary" Content="Daemon controls" Command="{Binding OpenDaemonCommand}"/>
                             </StackPanel>
                         </StackPanel>
                     </DockPanel>

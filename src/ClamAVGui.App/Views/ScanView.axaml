@@ -17,12 +17,14 @@
                     <TextBlock Text="Target Selection" FontWeight="SemiBold" FontSize="16"/>
 
                     <!-- Action Bar -->
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                        <TextBox Grid.Column="0" Text="{Binding SelectedTargetPath}" Watermark="Select target file or directory..." Margin="0,0,10,0"/>
-                        <Button Grid.Column="1" Classes="clamav-secondary" Content="Browse file" Command="{Binding BrowseFileCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0"/>
-                        <Button Grid.Column="2" Classes="clamav-secondary" Content="Browse folder" Command="{Binding BrowseFolderCommand}" IsEnabled="{Binding !IsScanning}" Margin="0,0,8,0"/>
-                        <Button Grid.Column="3" Classes="clamav-primary" Content="⚡ Quick scan" Command="{Binding QuickScanHomeCommand}" IsEnabled="{Binding !IsScanning}"/>
-                    </Grid>
+                    <TextBox Text="{Binding SelectedTargetPath}" Watermark="File or folder path"
+                             AutomationProperties.Name="Scan target path" IsEnabled="{Binding !IsScanning}"/>
+                    <WrapPanel IsEnabled="{Binding !IsScanning}">
+                        <Button Classes="clamav-primary" Content="Scan path" Command="{Binding ScanSelectedTargetCommand}" Margin="0,0,8,8"/>
+                        <Button Classes="clamav-secondary" Content="Choose file…" Command="{Binding BrowseFileCommand}" Margin="0,0,8,8"/>
+                        <Button Classes="clamav-secondary" Content="Choose folder…" Command="{Binding BrowseFolderCommand}" Margin="0,0,8,8"/>
+                        <Button Classes="clamav-secondary" Content="Quick scan" Command="{Binding QuickScanHomeCommand}" Margin="0,0,8,8"/>
+                    </WrapPanel>
 
                     <!-- Advanced Scan Settings -->
                     <StackPanel Spacing="8" Margin="0,6,0,0">
@@ -41,7 +43,7 @@
                 <StackPanel Spacing="8">
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Grid.Column="0" Spacing="2">
-                            <TextBlock Text="{Binding ScanVerdictText}" FontWeight="SemiBold" FontSize="14"/>
+                            <TextBlock Text="{Binding ScanVerdictText}" TextWrapping="Wrap" FontWeight="SemiBold" FontSize="14"/>
                             <TextBlock Text="{Binding CurrentScanningFile}" FontSize="12" TextTrimming="CharacterEllipsis" Opacity="0.7" FontFamily="Monospace"/>
                         </StackPanel>
                         <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">

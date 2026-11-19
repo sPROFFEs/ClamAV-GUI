@@ -43,9 +43,13 @@ public sealed partial class QuarantineViewModel : ViewModelBase
         if (item == null) return;
 
         string? destination = item.OriginalPath;
-        if (string.IsNullOrWhiteSpace(destination) || string.Equals(destination, "Unknown", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(destination) ||
+            string.Equals(destination, "Unknown", StringComparison.OrdinalIgnoreCase) || File.Exists(destination))
         {
-            destination = await _fileDialogService.SaveFileAsync("Select Restore Destination", Path.GetFileName(item.QuarantinePath));
+            var name = Path.GetFileName(item.OriginalPath);
+            destination = await _fileDialogService.SaveFileAsync("Choose an unused restore destination",
+                string.IsNullOrWhiteSpace(name) || string.Equals(name, "Unknown", StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetFileName(item.QuarantinePath) : name);
             if (string.IsNullOrWhiteSpace(destination)) return;
         }
 

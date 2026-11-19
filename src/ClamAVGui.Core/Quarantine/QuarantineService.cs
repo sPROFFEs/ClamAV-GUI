@@ -159,7 +159,7 @@ public sealed class QuarantineService : IQuarantineService
                 }
             }
 
-            File.Move(item.QuarantinePath, dest, overwrite: true);
+            File.Move(item.QuarantinePath, dest);
 
             items.Remove(item);
             await SaveInternalAsync(metaFile, items, cancellationToken);
@@ -180,17 +180,7 @@ public sealed class QuarantineService : IQuarantineService
             var item = items.FirstOrDefault(i => i.Id == id);
             if (item != null)
             {
-                if (File.Exists(item.QuarantinePath))
-                {
-                    try
-                    {
-                        File.Delete(item.QuarantinePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogWarning(ex, "Could not delete quarantined physical file {Path}", item.QuarantinePath);
-                    }
-                }
+                File.Delete(item.QuarantinePath);
 
                 items.Remove(item);
                 await SaveInternalAsync(metaFile, items, cancellationToken);

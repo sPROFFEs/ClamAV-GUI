@@ -75,6 +75,7 @@ public sealed class ClamAvScanner : IClamAvScanner
 
         if (selectedBackend == null || !await selectedBackend.IsAvailableAsync(cancellationToken))
         {
+            selectedBackend = null;
             // Default selection hierarchy: ClamScan (most capable for local full option set) -> ClamDScan -> ClamD
             foreach (var backend in _backends.OrderBy(b => b.Kind switch
             {

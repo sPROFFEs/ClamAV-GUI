@@ -12,6 +12,7 @@ public sealed partial class SchedulerViewModel : ViewModelBase
     private readonly ISettingsService _settingsService;
     private readonly IFileDialogService _fileDialogService;
     private readonly INotificationService _notificationService;
+    public bool SupportsScheduling { get; }
 
     [ObservableProperty]
     private string _scheduledScanPath = string.Empty;
@@ -29,12 +30,14 @@ public sealed partial class SchedulerViewModel : ViewModelBase
         ISchedulerService schedulerService,
         ISettingsService settingsService,
         IFileDialogService fileDialogService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IPlatformService platformService)
     {
         _schedulerService = schedulerService;
         _settingsService = settingsService;
         _fileDialogService = fileDialogService;
         _notificationService = notificationService;
+        SupportsScheduling = platformService.Capabilities.SupportsScheduling;
     }
 
     [RelayCommand]
@@ -59,7 +62,8 @@ public sealed partial class SchedulerViewModel : ViewModelBase
     [RelayCommand]
     public async Task SaveScheduleAsync()
     {
-        if (string.IsNullOrWhiteSpace(ScheduledScanPath))
+        if (!SupportsScheduling) return;
+        if (!Directory.Exists(ScheduledScanPath))
         {
             await _notificationService.ShowAsync("Scheduler", "Please choose a path to scan first.", NotificationSeverity.Warning);
             return;
@@ -87,12 +91,13 @@ public sealed partial class SchedulerViewModel : ViewModelBase
     [RelayCommand]
     public async Task RemoveScheduleAsync()
     {
+        if (!SupportsScheduling) return;
         var res = await _schedulerService.RemoveDailyScanTaskAsync();
         IsScheduledScanEnabled = await _schedulerService.IsScheduledScanConfiguredAsync();
         StatusMessage = res;
 
         var s = await _settingsService.LoadSettingsAsync();
-        s.IsScheduledScanEnabled = false;
+        s.IsScheduledScanEnabled = IsScheduledScanEnabled;
         await _settingsService.SaveSettingsAsync(s);
 
         await _notificationService.ShowAsync("Scheduled Scan", res);

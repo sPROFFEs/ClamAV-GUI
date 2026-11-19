@@ -6,7 +6,7 @@ namespace ClamAVGui.Core.Parsing;
 
 public sealed partial class ClamAvOutputParser : IClamAvOutputParser
 {
-    [GeneratedRegex(@"^(?:(?<win>[A-Za-z]:[\\/][^:]+)|(?<posix>/[^:]+)|(?<gen>[^:]+)):\s*(?<status>.+)$")]
+    [GeneratedRegex(@"^(?<path>.+):\s+(?<status>OK|FOUND|ERROR|.+ (?:FOUND|ERROR))$", RegexOptions.IgnoreCase)]
     private static partial Regex ScanLineRegex();
 
     [GeneratedRegex(@"sigs:\s*(\d+)")]
@@ -48,6 +48,14 @@ public sealed partial class ClamAvOutputParser : IClamAvOutputParser
                 continue;
             }
 
+            if (trimmed.StartsWith("ERROR:", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith("WARNING:", StringComparison.OrdinalIgnoreCase) ||
+                trimmed.StartsWith("LibClamAV Error:", StringComparison.OrdinalIgnoreCase))
+            {
+                errors.Add(trimmed);
+                continue;
+            }
+
             if (inSummarySection)
             {
                 var colonIndex = trimmed.IndexOf(':');
@@ -64,13 +72,6 @@ public sealed partial class ClamAvOutputParser : IClamAvOutputParser
                     else if (key.Equals("Data scanned", StringComparison.OrdinalIgnoreCase)) dataScanned = val;
                     else if (key.Equals("Time", StringComparison.OrdinalIgnoreCase)) timeTaken = val;
                 }
-                continue;
-            }
-
-            if (trimmed.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase) ||
-                trimmed.StartsWith("WARNING", StringComparison.OrdinalIgnoreCase))
-            {
-                errors.Add(trimmed);
                 continue;
             }
 
@@ -113,7 +114,9 @@ public sealed partial class ClamAvOutputParser : IClamAvOutputParser
         ScanVerdict verdict;
         if (exitCode == 0)
         {
-            verdict = detections.Count > 0 ? ScanVerdict.Infected : ScanVerdict.Clean;
+            verdict = detections.Count > 0 ? ScanVerdict.Infected
+                : errors.Any(error => error.Contains("ERROR", StringComparison.OrdinalIgnoreCase))
+                    ? ScanVerdict.Error : ScanVerdict.Clean;
         }
         else if (exitCode == 1)
         {
@@ -146,17 +149,7 @@ public sealed partial class ClamAvOutputParser : IClamAvOutputParser
         var match = ScanLineRegex().Match(trimmed);
         if (match.Success)
         {
-            string path = match.Groups["win"].Success ? match.Groups["win"].Value :
-                          match.Groups["posix"].Success ? match.Groups["posix"].Value :
-                          match.Groups["gen"].Value;
-            var status = match.Groups["status"].Value.Trim();
-            return (path.Trim(), status);
-        }
-
-        var idx = trimmed.LastIndexOf(':');
-        if (idx > 0 && idx < trimmed.Length - 1)
-        {
-            return (trimmed[..idx].Trim(), trimmed[(idx + 1)..].Trim());
+            return (match.Groups["path"].Value, match.Groups["status"].Value);
         }
 
         return null;

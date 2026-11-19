@@ -1,3 +1,4 @@
+using ClamAVGui.Core.Configuration;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -31,9 +32,11 @@ public sealed class DiagnosticsService : IDiagnosticsService
     public async Task<DiagnosticsReport> CollectReportAsync(CancellationToken cancellationToken = default)
     {
         var settings = await _settingsService.LoadSettingsAsync(cancellationToken);
-        var installation = await _binaryLocator.FindInstallationAsync(settings.CustomClamAvPath, cancellationToken);
+        var installation = await _binaryLocator.FindInstallationAsync(settings, cancellationToken);
         var config = await _configProvider.LoadAsync(installation, cancellationToken);
         var health = await _daemon.CheckHealthAsync(cancellationToken);
+        var databaseDirectory = installation?.DatabaseDirectory ?? settings.CustomDatabaseDirectory;
+        var databaseStatus = ClamAvDatabase.Inspect(databaseDirectory);
 
         var healthLines = new List<string>();
         if (installation == null)
@@ -43,11 +46,11 @@ public sealed class DiagnosticsService : IDiagnosticsService
         else
         {
             healthLines.Add($"OK: clamscan found at '{installation.ClamScanPath}'");
-            healthLines.Add(installation.FreshClamPath != null ? $"OK: freshclam found at '{installation.FreshClamPath}'" : "WARN: freshclam missing.");
+            healthLines.Add(installation.FreshClamPath != null ? $"OK: freshclam found at '{installation.FreshClamPath}'" : "INFO: freshclam missing (optional for offline updates).");
             healthLines.Add(installation.ClamdPath != null ? $"OK: clamd found at '{installation.ClamdPath}'" : "INFO: clamd missing (daemon features unavailable).");
-            healthLines.Add(installation.DatabaseDirectory != null && Directory.Exists(installation.DatabaseDirectory) ? $"OK: Database directory exists at '{installation.DatabaseDirectory}'" : "WARN: Database directory missing.");
             healthLines.Add(health.ProtocolHealthy ? $"OK: ClamAV daemon is healthy ({health.Version})" : (health.EndpointReachable ? $"WARN: Daemon reachable but protocol unhealthy: {health.Error}" : $"INFO: Daemon endpoint unreachable: {health.Error}"));
         }
+        healthLines.Add($"{(databaseStatus == DatabaseStatus.Available ? "OK" : databaseStatus == DatabaseStatus.Unknown ? "INFO" : "WARN")}: {ClamAvDatabase.Describe(databaseStatus)}.");
 
         return new DiagnosticsReport
         {
@@ -61,12 +64,12 @@ public sealed class DiagnosticsService : IDiagnosticsService
             ClamdScanPath = installation?.ClamdScanPath,
             ClamOnAccPath = installation?.ClamOnAccPath,
             ConfigDirectory = installation?.ConfigDirectory,
-            DatabaseDirectory = installation?.DatabaseDirectory,
-            DaemonEndpoint = config.DaemonEndpoint?.ToString(),
-            DaemonRunning = health.EndpointReachable,
+            DatabaseDirectory = databaseDirectory,
+            DaemonEndpoint = (health.OwnedByApplication ? _daemon.CurrentInstance?.Endpoint : config.DaemonEndpoint)?.ToString(),
+            DaemonRunning = health.ProtocolHealthy,
             DaemonVersion = health.Version,
             DaemonStats = health.Stats,
-            RealTimeMode = _platformService.Capabilities.SupportsNativeOnAccess ? "Native (clamonacc/fanotify)" : (_platformService.Capabilities.SupportsReactiveMonitoring ? "Reactive (file watcher)" : "Unsupported"),
+            RealTimeMode = _platformService.Capabilities.SupportsReactiveMonitoring ? "Reactive (file watcher)" : "Unsupported",
             SchedulerBackend = _platformService.Capabilities.SupportsScheduling ? _platformService.Platform.ToString() : "None",
             QuarantineDirectory = settings.CustomQuarantinePath ?? Path.Combine(_platformService.UserDataDirectory, "Quarantine"),
             HealthCheckOutput = healthLines
@@ -89,12 +92,14 @@ public sealed class DiagnosticsService : IDiagnosticsService
         sb.AppendLine($"clamdscan:       {Redact(report.ClamdScanPath, redactSensitivePaths)}");
         sb.AppendLine($"clamonacc:       {Redact(report.ClamOnAccPath, redactSensitivePaths)}");
         sb.AppendLine($"Config Dir:      {Redact(report.ConfigDirectory, redactSensitivePaths)}");
-        sb.AppendLine($"Database Dir:    {Redact(report.DatabaseDirectory, redactSensitivePaths)}");
+        sb.AppendLine($"Database Dir:    {Redact(report.DatabaseDirectory, redactSensitivePaths) ?? "Unknown (ClamAV default)"}");
         sb.AppendLine();
         sb.AppendLine("--- Daemon Status ---");
-        sb.AppendLine($"Daemon Endpoint: {report.DaemonEndpoint ?? "None"}");
+        sb.AppendLine($"Daemon Endpoint: {Redact(report.DaemonEndpoint, redactSensitivePaths) ?? "None"}");
         sb.AppendLine($"Daemon Running:  {(report.DaemonRunning ? "Yes" : "No")}");
         sb.AppendLine($"Daemon Version:  {report.DaemonVersion ?? "N/A"}");
+        sb.AppendLine($"Monitoring:      {report.RealTimeMode}");
+        sb.AppendLine($"Scheduler:       {report.SchedulerBackend}");
         sb.AppendLine();
         sb.AppendLine("--- Health Check Summary ---");
         foreach (var line in report.HealthCheckOutput)

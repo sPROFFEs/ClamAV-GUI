@@ -4,7 +4,7 @@
         xmlns:views="using:ClamAVGui.App.Views"
         x:Class="ClamAVGui.App.Views.MainWindow"
         x:DataType="vm:MainViewModel"
-        Title="ClamAV Antivirus Suite" Width="1180" Height="800"
+        Title="ClamAV GUI" Width="1180" Height="800"
         MinWidth="960" MinHeight="640"
         WindowStartupLocation="CenterScreen">
 
@@ -14,21 +14,24 @@
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}" BorderThickness="0,0,0,1" Padding="12,10">
             <Grid ColumnDefinitions="Auto,Auto,*,Auto">
                 <!-- Toggle Sidebar Button -->
-                <Button Grid.Column="0" Classes="clamav-secondary" Content="☰" Command="{Binding ToggleSidebarCommand}"
+                <Button Grid.Column="0" Classes="clamav-secondary" Content="☰" AutomationProperties.Name="Toggle navigation" Command="{Binding ToggleSidebarCommand}"
                         Padding="10,6" FontSize="14" VerticalAlignment="Center" Margin="0,0,12,0"/>
 
                 <!-- ClamAV Logo & Brand Title -->
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
                     <Image Source="avares://ClamAVGui.App/Assets/icon.png" Width="26" Height="26" VerticalAlignment="Center"/>
                     <TextBlock Text="ClamAV" FontWeight="Bold" FontSize="16" Foreground="#C41E3A" VerticalAlignment="Center"/>
-                    <TextBlock Text="Security Suite" FontWeight="SemiBold" FontSize="14" Opacity="0.85" VerticalAlignment="Center"/>
+                    <TextBlock Text="GUI" FontWeight="SemiBold" FontSize="14" Opacity="0.85" VerticalAlignment="Center"/>
                 </StackPanel>
 
                 <!-- Engine Status Pill in Header -->
                 <Border Grid.Column="3" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
                         CornerRadius="20" Padding="12,4" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Ellipse Width="8" Height="8" Fill="#10B981" VerticalAlignment="Center"/>
+                        <Ellipse Width="8" Height="8" Fill="{StaticResource ClamAvSuccess}" VerticalAlignment="Center"
+                                 IsVisible="{Binding Dashboard.IsDatabaseReady}"/>
+                        <Ellipse Width="8" Height="8" Fill="{StaticResource ClamAvWarning}" VerticalAlignment="Center"
+                                 IsVisible="{Binding !Dashboard.IsDatabaseReady}"/>
                         <TextBlock Text="{Binding Dashboard.StatusText}" FontSize="12" Opacity="0.8" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
@@ -53,7 +56,7 @@
                                  Background="Transparent" SelectionMode="Single">
                             <ListBox.ItemTemplate>
                                 <DataTemplate x:DataType="vm:NavItem">
-                                    <Grid ColumnDefinitions="36,*" Margin="4,8">
+                                    <Grid ColumnDefinitions="36,*" Margin="4,8" ToolTip.Tip="{Binding Title}">
                                         <PathIcon Grid.Column="0" Data="{Binding IconGeometry}"
                                                   Width="18" Height="18" Foreground="#C41E3A" HorizontalAlignment="Left" VerticalAlignment="Center"/>
                                         <TextBlock Grid.Column="1" Text="{Binding Title}" FontSize="14" FontWeight="Medium" VerticalAlignment="Center"
@@ -69,7 +72,7 @@
                             Padding="12,10" IsVisible="{Binding IsSidebarExpanded}">
                         <StackPanel Spacing="2">
                             <TextBlock Text="ClamAV Open Source Engine" FontSize="11" FontWeight="SemiBold" Opacity="0.75"/>
-                            <TextBlock Text="{Binding Dashboard.VirusDefinitionsVersion, StringFormat='Database: {0}'}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock Text="{Binding Dashboard.DatabaseStatusText, StringFormat='Database: {0}'}" FontSize="11" Opacity="0.6" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -81,7 +84,7 @@
                 <Border Grid.Row="0" Background="#1E293B" Padding="14,10" Margin="24,16,24,0" CornerRadius="6"
                         IsVisible="{Binding IsNotificationBannerVisible}">
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="0" Text="{Binding NotificationBannerMessage}" TextWrapping="Wrap" Foreground="White" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center"/>
                         <Button Grid.Column="1" Content="✕" Command="{Binding DismissBannerCommand}" Background="Transparent" Foreground="White" FontWeight="Bold" Padding="8,2" Margin="8,0,0,0"/>
                     </Grid>
                 </Border>

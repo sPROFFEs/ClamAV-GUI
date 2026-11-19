@@ -114,9 +114,8 @@ public sealed class ClamdBackend : IScanBackend
 
         stopwatch.Stop();
 
-        var verdict = errors.Count > 0 && detections.Count == 0 && scannedFilesCount == 0
-            ? ScanVerdict.Error
-            : (detections.Count > 0 ? ScanVerdict.Infected : ScanVerdict.Clean);
+        var verdict = detections.Count > 0 ? ScanVerdict.Infected
+            : errors.Count > 0 ? ScanVerdict.Error : ScanVerdict.Clean;
 
         return new ScanExecutionResult
         {

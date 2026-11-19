@@ -69,9 +69,13 @@ public sealed partial class MonitoringViewModel : ViewModelBase
                         LogEntries.Insert(0, $"[{DateTime.Now:HH:mm:ss}] THREAT FOUND: {file} - {result.Detections.FirstOrDefault()?.ThreatName}");
                         _notificationService.ShowAsync("Threat Detected!", $"Threat found in {file}", NotificationSeverity.ThreatDetected);
                     }
-                    else
+                    else if (result.Verdict == ScanVerdict.Clean)
                     {
                         LogEntries.Insert(0, $"[{DateTime.Now:HH:mm:ss}] Clean: {file}");
+                    }
+                    else
+                    {
+                        LogEntries.Insert(0, $"[{DateTime.Now:HH:mm:ss}] Scan {result.Verdict.ToString().ToLowerInvariant()}: {file}. {result.Errors.FirstOrDefault()}");
                     }
                 });
             }

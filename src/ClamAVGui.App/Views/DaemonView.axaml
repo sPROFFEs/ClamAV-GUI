@@ -16,7 +16,7 @@
                 <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto">
                     <PathIcon Grid.Column="0" Grid.RowSpan="3" Data="{StaticResource IconDaemon}" Width="36" Height="36" Foreground="#C41E3A" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding StatusMessage}" FontSize="16" FontWeight="SemiBold"/>
+                    <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding StatusMessage}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap"/>
                     <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Version, StringFormat='Engine version: {0}'}" FontSize="12" Opacity="0.8" Margin="0,4,0,4"/>
                     <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding Stats, StringFormat='Process statistics: {0}'}" FontSize="12" Opacity="0.7"/>
                 </Grid>
@@ -26,11 +26,11 @@
             <Border Classes="clamav-card">
                 <StackPanel Spacing="12">
                     <TextBlock Text="Service Controls" FontWeight="SemiBold" FontSize="14"/>
-                    <WrapPanel Orientation="Horizontal">
-                        <Button Classes="clamav-primary" Content="▶ Start Daemon" Command="{Binding StartDaemonCommand}" IsEnabled="{Binding !IsDaemonRunning}" Margin="0,0,10,10"/>
-                        <Button Classes="clamav-danger" Content="⏹ Stop Daemon" Command="{Binding StopDaemonCommand}" IsEnabled="{Binding IsDaemonRunning}" Margin="0,0,10,10"/>
-                        <Button Classes="clamav-secondary" Content="🔄 Reload Database" Command="{Binding ReloadDatabaseCommand}" IsEnabled="{Binding IsDaemonRunning}" Margin="0,0,10,10"/>
-                        <Button Classes="clamav-secondary" Content="Ping Status" Command="{Binding RefreshStatusCommand}" Margin="0,0,10,10"/>
+                    <WrapPanel Orientation="Horizontal" IsEnabled="{Binding !IsBusy}">
+                        <Button Classes="clamav-primary" Content="Start daemon" Command="{Binding StartDaemonCommand}" IsEnabled="{Binding !IsDaemonRunning}" Margin="0,0,10,10"/>
+                        <Button Classes="clamav-danger" Content="Stop daemon" Command="{Binding StopDaemonCommand}" IsEnabled="{Binding OwnsDaemon}" Margin="0,0,10,10"/>
+                        <Button Classes="clamav-secondary" Content="Reload signatures" Command="{Binding ReloadDatabaseCommand}" IsEnabled="{Binding IsDaemonRunning}" Margin="0,0,10,10"/>
+                        <Button Classes="clamav-secondary" Content="Refresh status" Command="{Binding RefreshStatusCommand}" Margin="0,0,10,10"/>
                     </WrapPanel>
                 </StackPanel>
             </Border>

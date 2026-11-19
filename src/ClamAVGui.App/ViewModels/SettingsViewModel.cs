@@ -1,4 +1,5 @@
 using ClamAVGui.App.Services;
+using ClamAVGui.Core.Configuration;
 using ClamAVGui.Core.Interfaces;
 using ClamAVGui.Core.Models;
 using ClamAVGui.Platform.Interfaces;
@@ -19,6 +20,9 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     [ObservableProperty]
     private string _customClamAvPath = string.Empty;
+
+    [ObservableProperty]
+    private string _customDatabaseDirectory = string.Empty;
 
     [ObservableProperty]
     private string _customQuarantinePath = string.Empty;
@@ -64,6 +68,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
     public string CurrentAppVersion => _appUpdateService.CurrentVersion;
     public string RecommendedInstallCommand => _installerService.RecommendedCommandOrMethod;
+    public event Func<Task>? EngineSettingsSaved;
 
     public SettingsViewModel(
         ISettingsService settingsService,
@@ -88,6 +93,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
     {
         var s = await _settingsService.LoadSettingsAsync();
         CustomClamAvPath = s.CustomClamAvPath ?? string.Empty;
+        CustomDatabaseDirectory = s.CustomDatabaseDirectory ?? string.Empty;
         CustomQuarantinePath = s.CustomQuarantinePath ?? string.Empty;
         AutoUpdateDefinitions = s.AutoUpdateDefinitions;
         MinimizeToTray = s.MinimizeToTray;
@@ -171,9 +177,8 @@ public sealed partial class SettingsViewModel : ViewModelBase
                     return;
                 }
 
-                CustomClamAvPath = installation.RootDirectory ?? string.Empty;
-                await SaveSettingsAsync();
                 EngineInstallStatus = $"ClamAV detected at {installation.ClamScanPath}. You can start scanning now.";
+                if (EngineSettingsSaved != null) await EngineSettingsSaved();
                 await _notificationService.ShowAsync("ClamAV Engine", EngineInstallStatus);
             }
             else
@@ -199,9 +204,7 @@ public sealed partial class SettingsViewModel : ViewModelBase
         if (installation != null && !string.IsNullOrWhiteSpace(installation.RootDirectory))
         {
             CustomClamAvPath = installation.RootDirectory;
-            StatusMessage = $"ClamAV auto-detected: {installation.ClamScanPath} ({installation.Version})";
-            await SaveSettingsAsync();
-            await _notificationService.ShowAsync("Auto-Detect", StatusMessage);
+            StatusMessage = $"Found {installation.ClamScanPath}. Select Save settings to use this location.";
         }
         else
         {
@@ -217,7 +220,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
         if (!string.IsNullOrWhiteSpace(folder))
         {
             CustomClamAvPath = folder;
-            await SaveSettingsAsync();
         }
     }
 
@@ -228,7 +230,6 @@ public sealed partial class SettingsViewModel : ViewModelBase
         if (!string.IsNullOrWhiteSpace(folder))
         {
             CustomQuarantinePath = folder;
-            await SaveSettingsAsync();
         }
     }
 
@@ -236,7 +237,18 @@ public sealed partial class SettingsViewModel : ViewModelBase
     public async Task SaveSettingsAsync()
     {
         var s = await _settingsService.LoadSettingsAsync();
-        s.CustomClamAvPath = string.IsNullOrWhiteSpace(CustomClamAvPath) ? null : CustomClamAvPath;
+        var databaseDirectory = CustomDatabaseDirectory.Trim();
+        if (databaseDirectory.Length > 0 &&
+            (!Path.IsPathFullyQualified(databaseDirectory) || !Directory.Exists(databaseDirectory) ||
+             databaseDirectory.IndexOfAny(new[] { '\r', '\n', '"' }) >= 0))
+        {
+            StatusMessage = "Choose an existing signature database folder with a valid absolute path.";
+            await _notificationService.ShowAsync("Settings", StatusMessage, NotificationSeverity.Warning);
+            return;
+        }
+
+        s.CustomClamAvPath = string.IsNullOrWhiteSpace(CustomClamAvPath) ? null : CustomClamAvPath.Trim();
+        s.CustomDatabaseDirectory = databaseDirectory.Length == 0 ? null : databaseDirectory;
         s.CustomQuarantinePath = string.IsNullOrWhiteSpace(CustomQuarantinePath) ? null : CustomQuarantinePath;
         s.AutoUpdateDefinitions = AutoUpdateDefinitions;
         s.MinimizeToTray = MinimizeToTray;
@@ -247,10 +259,20 @@ public sealed partial class SettingsViewModel : ViewModelBase
 
         await _settingsService.SaveSettingsAsync(s);
         await _startupService.SetStartOnLoginAsync(StartOnLogin);
+        if (EngineSettingsSaved != null) await EngineSettingsSaved();
 
-        var installation = await _binaryLocator.FindInstallationAsync(s.CustomClamAvPath);
-        StatusMessage = installation != null ? $"Settings saved. ClamAV found at {installation.ClamScanPath}" : "Settings saved (ClamAV path not verified).";
+        var installation = await _binaryLocator.FindInstallationAsync(s);
+        StatusMessage = installation != null
+            ? $"Settings saved. {ClamAvDatabase.Describe(ClamAvDatabase.Inspect(installation.DatabaseDirectory))}."
+            : "Settings saved. ClamAV was not found.";
 
         await _notificationService.ShowAsync("Settings", StatusMessage);
+    }
+
+    [RelayCommand]
+    public async Task BrowseDatabaseDirectoryAsync()
+    {
+        var folder = await _fileDialogService.SelectFolderAsync("Select signature database folder");
+        if (!string.IsNullOrWhiteSpace(folder)) CustomDatabaseDirectory = folder;
     }
 }

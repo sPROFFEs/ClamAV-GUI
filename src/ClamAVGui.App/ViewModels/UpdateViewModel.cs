@@ -66,7 +66,7 @@ public sealed partial class UpdateViewModel : ViewModelBase
             {
                 StatusText = "Virus database is already up to date.";
                 OutputText = result.Output;
-                await _historyService.LogEventAsync("Update", "Database already up to date.");
+                await _historyService.LogEventAsync("Definitions Checked", "Database already up to date.");
                 await _notificationService.ShowAsync("ClamAV Update", "Database is up to date.");
             }
             else if (result.IsManagedBySystem)
@@ -80,7 +80,7 @@ public sealed partial class UpdateViewModel : ViewModelBase
             {
                 StatusText = $"Update successful! (Signatures: {result.SignaturesCount?.ToString() ?? "Updated"})";
                 OutputText = result.Output;
-                await _historyService.LogEventAsync("Update", $"Database updated successfully. Signatures: {result.SignaturesCount}");
+                await _historyService.LogEventAsync("Definitions Checked", $"Database updated successfully. Signatures: {result.SignaturesCount}");
                 await _notificationService.ShowAsync("ClamAV Update", "Definitions updated successfully.");
             }
         }

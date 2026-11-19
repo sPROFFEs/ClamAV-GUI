@@ -37,6 +37,11 @@ public sealed partial class DiagnosticsViewModel : ViewModelBase
             Report = await _diagnosticsService.CollectReportAsync();
             FormattedReport = _diagnosticsService.FormatReport(Report, redactSensitivePaths: true);
         }
+        catch (Exception ex)
+        {
+            Report = null;
+            FormattedReport = $"Could not collect diagnostics. {ex.Message}";
+        }
         finally
         {
             IsBusy = false;

@@ -96,6 +96,24 @@ public sealed partial class ScanViewModel : ViewModelBase
     }
 
     [RelayCommand]
+    public async Task ScanSelectedTargetAsync()
+    {
+        var path = SelectedTargetPath.Trim();
+        if (Directory.Exists(path))
+        {
+            await StartScanAsync(Path.GetFullPath(path), ScanTargetType.Directory);
+        }
+        else if (File.Exists(path))
+        {
+            await StartScanAsync(Path.GetFullPath(path), ScanTargetType.File);
+        }
+        else
+        {
+            ScanVerdictText = "Enter an existing file or folder path.";
+        }
+    }
+
+    [RelayCommand]
     public async Task QuickScanHomeAsync()
     {
         var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -142,9 +160,10 @@ public sealed partial class ScanViewModel : ViewModelBase
 
     public async Task StartScanAsync(string targetPath, ScanTargetType targetType)
     {
-        if (string.IsNullOrWhiteSpace(targetPath)) return;
+        if (IsScanning || string.IsNullOrWhiteSpace(targetPath)) return;
 
         IsScanning = true;
+        SelectedTargetPath = targetPath;
         Results.Clear();
         CurrentSummary = null;
         ScanVerdictText = "Scanning in progress...";
@@ -194,13 +213,21 @@ public sealed partial class ScanViewModel : ViewModelBase
             var result = await _scanCoordinator.QueueAsync(request, progress, _scanCts.Token);
 
             CurrentSummary = result.Statistics;
+            if (int.TryParse(CurrentSummary?.ScannedFiles, out var scannedFiles))
+            {
+                ScannedFilesCount = scannedFiles;
+            }
             ScanVerdictText = result.Verdict switch
             {
-                ScanVerdict.Clean => "Scan Complete: No threats found.",
-                ScanVerdict.Infected => $"Threats Detected! Found {result.Detections.Count} infected item(s).",
+                ScanVerdict.Clean => "Scan complete. No threats found.",
+                ScanVerdict.Infected => $"Threats detected. Found {result.Detections.Count} infected item(s).",
                 ScanVerdict.Cancelled => "Scan Cancelled.",
-                _ => $"Scan finished with issues: {string.Join("; ", result.Errors)}"
+                _ => $"Scan failed (exit code {result.ExitCode}). {string.Join(" ", result.Errors.Take(3))}"
             };
+            if (result.Verdict == ScanVerdict.Infected && result.Errors.Count > 0)
+            {
+                ScanVerdictText += $" {string.Join(" ", result.Errors.Take(3))}";
+            }
 
             await _historyService.LogEventAsync("Scan", $"Scan completed for {targetPath}. Verdict: {result.Verdict}. Threats: {result.Detections.Count}.");
             if (result.Verdict == ScanVerdict.Infected)
@@ -209,7 +236,7 @@ public sealed partial class ScanViewModel : ViewModelBase
             }
             else if (result.Verdict == ScanVerdict.Clean)
             {
-                await _notificationService.ShowAsync("Scan Finished", "No threats found. Your files are clean.");
+                await _notificationService.ShowAsync("Scan Finished", "No threats found in the scanned files.");
             }
         }
         catch (OperationCanceledException)

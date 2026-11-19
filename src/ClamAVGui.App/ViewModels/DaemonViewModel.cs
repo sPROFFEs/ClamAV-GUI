@@ -1,3 +1,4 @@
+using ClamAVGui.Core.Configuration;
 using ClamAVGui.Core.Interfaces;
 using ClamAVGui.Core.Models;
 using ClamAVGui.Platform.Interfaces;
@@ -17,6 +18,9 @@ public sealed partial class DaemonViewModel : ViewModelBase
 
     [ObservableProperty]
     private bool _isDaemonRunning;
+
+    [ObservableProperty]
+    private bool _ownsDaemon;
 
     [ObservableProperty]
     private bool _isBusy;
@@ -57,9 +61,12 @@ public sealed partial class DaemonViewModel : ViewModelBase
         {
             var health = await _daemon.CheckHealthAsync();
             IsDaemonRunning = health.EndpointReachable && health.ProtocolHealthy;
+            OwnsDaemon = health.OwnedByApplication;
             Version = health.Version ?? "N/A";
             Stats = health.Stats ?? "N/A";
-            StatusMessage = IsDaemonRunning ? "Daemon is online and responsive." : (health.EndpointReachable ? $"Protocol error: {health.Error}" : $"Unreachable: {health.Error}");
+            StatusMessage = IsDaemonRunning
+                ? (OwnsDaemon ? "Application daemon is running." : "System daemon is running.")
+                : (health.EndpointReachable ? $"Protocol error: {health.Error}" : $"Unavailable: {health.Error}");
         }
         finally
         {
@@ -77,7 +84,7 @@ public sealed partial class DaemonViewModel : ViewModelBase
         try
         {
             var settings = await _settingsService.LoadSettingsAsync();
-            var installation = await _binaryLocator.FindInstallationAsync(settings.CustomClamAvPath);
+            var installation = await _binaryLocator.FindInstallationAsync(settings);
             if (installation == null)
             {
                 StatusMessage = "ClamAV is not installed or configured.";
@@ -110,7 +117,7 @@ public sealed partial class DaemonViewModel : ViewModelBase
     [RelayCommand]
     public async Task StopDaemonAsync()
     {
-        if (IsBusy) return;
+        if (IsBusy || !OwnsDaemon) return;
 
         IsBusy = true;
         StatusMessage = "Stopping daemon...";

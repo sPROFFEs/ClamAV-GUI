@@ -87,8 +87,12 @@ public sealed class ClamAvConfigurationProvider : IClamAvConfigurationProvider
         CancellationToken cancellationToken = default)
     {
         Directory.CreateDirectory(targetDirectory);
-        var dbDir = installation.DatabaseDirectory ?? Path.Combine(targetDirectory, "database");
-        Directory.CreateDirectory(dbDir);
+        var dbDir = installation.DatabaseDirectory;
+        if (dbDir != null && (!Path.IsPathFullyQualified(dbDir) ||
+            dbDir.IndexOfAny(new[] { '\r', '\n', '"' }) >= 0 || !Directory.Exists(dbDir)))
+        {
+            throw new IOException($"ClamAV cannot use the configured database directory: {dbDir}");
+        }
         // A managed daemon runs as the desktop user. System log directories are
         // commonly owned by the clamav account and cannot be written here.
         var logDir = targetDirectory;
@@ -103,7 +107,7 @@ public sealed class ClamAvConfigurationProvider : IClamAvConfigurationProvider
         var freshclamConfPath = Path.Combine(targetDirectory, "freshclam.conf");
 
         var sbClamd = new StringBuilder();
-        sbClamd.AppendLine($"DatabaseDirectory \"{dbDir}\"");
+        if (dbDir != null) sbClamd.AppendLine($"DatabaseDirectory \"{dbDir}\"");
         sbClamd.AppendLine($"LogFile \"{Path.Combine(logDir, "clamd.log")}\"");
         sbClamd.AppendLine("LogTime yes");
         sbClamd.AppendLine("LogClean no");
@@ -124,7 +128,7 @@ public sealed class ClamAvConfigurationProvider : IClamAvConfigurationProvider
         await WriteFileAtomicallyAsync(clamdConfPath, sbClamd.ToString(), cancellationToken);
 
         var sbFresh = new StringBuilder();
-        sbFresh.AppendLine($"DatabaseDirectory \"{dbDir}\"");
+        if (dbDir != null) sbFresh.AppendLine($"DatabaseDirectory \"{dbDir}\"");
         sbFresh.AppendLine($"UpdateLogFile \"{Path.Combine(logDir, "freshclam.log")}\"");
         sbFresh.AppendLine("LogTime yes");
         sbFresh.AppendLine("LogVerbose no");

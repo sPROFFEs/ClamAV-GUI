@@ -1,4 +1,5 @@
 using ClamAVGui.Core.Interfaces;
+using ClamAVGui.Core.Configuration;
 using ClamAVGui.Core.Models;
 using ClamAVGui.Platform.Interfaces;
 using ClamAVGui.Platform.Linux;
@@ -18,7 +19,40 @@ public class PlatformTests
         Assert.Equal(PlatformKind.Linux, service.Platform);
         Assert.Contains("clamav-gui", service.UserDataDirectory);
         Assert.True(service.Capabilities.SupportsClamScan);
-        Assert.True(service.Capabilities.SupportsScheduling);
+        Assert.False(service.Capabilities.SupportsScheduling);
+    }
+
+    [Fact]
+    public async Task LinuxLocatorFindsOfflineSignaturesUnderTheScannerPrefix()
+    {
+        var prefix = Path.Combine(Path.GetTempPath(), "clamav-prefix-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var bin = Directory.CreateDirectory(Path.Combine(prefix, "bin")).FullName;
+            var database = Directory.CreateDirectory(Path.Combine(prefix, "share", "clamav")).FullName;
+            await File.WriteAllTextAsync(Path.Combine(bin, "clamscan"), "fixture");
+            await File.WriteAllTextAsync(Path.Combine(database, "daily.cvd"), "fixture");
+
+            var installation = await new LinuxClamAvBinaryLocator().FindInstallationAsync(bin);
+            Assert.NotNull(installation);
+            Assert.Equal(database, installation.DatabaseDirectory);
+            Assert.Equal(DatabaseStatus.Available, ClamAvDatabase.Inspect(installation.DatabaseDirectory));
+
+            var overrideDirectory = Directory.CreateDirectory(Path.Combine(prefix, "offline copy")).FullName;
+            installation = await new LinuxClamAvBinaryLocator().FindInstallationAsync(new ApplicationSettings
+            {
+                CustomClamAvPath = bin,
+                CustomDatabaseDirectory = overrideDirectory
+            });
+            Assert.NotNull(installation);
+            Assert.Equal(overrideDirectory, installation.DatabaseDirectory);
+            Assert.True(installation.UsesCustomDatabaseDirectory);
+            Assert.Equal(DatabaseStatus.Empty, ClamAvDatabase.Inspect(installation.DatabaseDirectory));
+        }
+        finally
+        {
+            Directory.Delete(prefix, recursive: true);
+        }
     }
 
     [Fact]

@@ -20,7 +20,7 @@ public sealed partial class HistoryViewModel : ViewModelBase
     [ObservableProperty]
     private string _filterType = "All";
 
-    public ObservableCollection<string> FilterTypes { get; } = new() { "All", "Scan", "Update", "Update Failed", "Config Initialized" };
+    public ObservableCollection<string> FilterTypes { get; } = new() { "All", "Scan", "Update", "Definitions Checked", "Update Failed", "Config Initialized" };
     public ObservableCollection<HistoryEvent> Events { get; } = new();
 
     public HistoryViewModel(

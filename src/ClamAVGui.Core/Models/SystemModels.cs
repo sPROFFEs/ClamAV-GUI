@@ -45,6 +45,7 @@ public sealed record ClamAvInstallation
     public string? ClamConfPath { get; init; }
     public string? ConfigDirectory { get; init; }
     public string? DatabaseDirectory { get; init; }
+    public bool UsesCustomDatabaseDirectory { get; init; }
     public string? LogDirectory { get; init; }
     public required string Version { get; init; }
     public required ClamAvInstallationSource Source { get; init; }
@@ -116,6 +117,7 @@ public sealed class ApplicationSettings
 {
     public int SchemaVersion { get; set; } = 1;
     public string? CustomClamAvPath { get; set; }
+    public string? CustomDatabaseDirectory { get; set; }
     public bool AutoUpdateDefinitions { get; set; }
     public bool MinimizeToTray { get; set; }
     public bool StartOnLogin { get; set; }

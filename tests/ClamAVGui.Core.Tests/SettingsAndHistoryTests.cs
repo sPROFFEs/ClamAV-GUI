@@ -22,6 +22,7 @@ public class SettingsAndHistoryTests : IDisposable
         var original = new ApplicationSettings
         {
             CustomClamAvPath = "/usr/bin",
+            CustomDatabaseDirectory = "/usr/local/share/clamav",
             AutoUpdateDefinitions = true,
             HeuristicAlerts = true,
             MonitoredPaths = new List<string> { "/home/user/downloads" }
@@ -31,6 +32,7 @@ public class SettingsAndHistoryTests : IDisposable
         var loaded = await settingsService.LoadSettingsAsync();
 
         Assert.Equal("/usr/bin", loaded.CustomClamAvPath);
+        Assert.Equal("/usr/local/share/clamav", loaded.CustomDatabaseDirectory);
         Assert.True(loaded.AutoUpdateDefinitions);
         Assert.True(loaded.HeuristicAlerts);
         Assert.Single(loaded.MonitoredPaths);

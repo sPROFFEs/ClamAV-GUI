@@ -151,12 +151,12 @@ public partial class App : Application
                 async () =>
                 {
                     var s = await settingsService.LoadSettingsAsync();
-                    return await binaryLocator.FindInstallationAsync(s.CustomClamAvPath);
+                    return await binaryLocator.FindInstallationAsync(s);
                 },
                 async () =>
                 {
                     var s = await settingsService.LoadSettingsAsync();
-                    var inst = await binaryLocator.FindInstallationAsync(s.CustomClamAvPath);
+                    var inst = await binaryLocator.FindInstallationAsync(s);
                     var cfg = await configProvider.LoadAsync(inst);
                     return cfg.DaemonEndpoint ?? (platform.Platform == PlatformKind.Windows
                         ? new TcpClamdEndpoint("127.0.0.1", 3310)
@@ -174,7 +174,7 @@ public partial class App : Application
             return new ClamScanBackend(runner, parser, async () =>
             {
                 var s = await settings.LoadSettingsAsync();
-                return await locator.FindInstallationAsync(s.CustomClamAvPath);
+                return await locator.FindInstallationAsync(s);
             });
         });
 
@@ -187,7 +187,7 @@ public partial class App : Application
             return new ClamdScanBackend(runner, parser, async () =>
             {
                 var s = await settings.LoadSettingsAsync();
-                return await locator.FindInstallationAsync(s.CustomClamAvPath);
+                return await locator.FindInstallationAsync(s);
             });
         });
 
@@ -201,7 +201,7 @@ public partial class App : Application
             return new ClamdBackend(protocol, async () =>
             {
                 var s = await settings.LoadSettingsAsync();
-                var inst = await locator.FindInstallationAsync(s.CustomClamAvPath);
+                var inst = await locator.FindInstallationAsync(s);
                 var cfg = await configProvider.LoadAsync(inst);
                 return cfg.DaemonEndpoint;
             }, parser);
@@ -220,8 +220,10 @@ public partial class App : Application
             return new ClamAvUpdater(runner, parser, async () =>
             {
                 var s = await settings.LoadSettingsAsync();
-                return await locator.FindInstallationAsync(s.CustomClamAvPath);
-            });
+                return await locator.FindInstallationAsync(s);
+            }, systemUpdate: OperatingSystem.IsLinux()
+                ? (installation, token) => LinuxFreshClamService.TryUpdateAsync(runner, installation, token)
+                : null);
         });
 
         services.AddSingleton<IDiagnosticsService, DiagnosticsService>();
@@ -230,12 +232,13 @@ public partial class App : Application
         // ViewModels
         services.AddSingleton<DashboardViewModel>(sp => new DashboardViewModel(
             sp.GetRequiredService<IClamAvBinaryLocator>(),
-            sp.GetRequiredService<IClamAvDaemon>(),
             sp.GetRequiredService<IHistoryService>(),
             sp.GetRequiredService<ISettingsService>(),
             () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 1,
             () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 2,
-            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 9
+            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 9,
+            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 6,
+            () => sp.GetRequiredService<MainViewModel>().SelectedTabIndex = 5
         ));
 
         services.AddSingleton<ScanViewModel>();

@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using ClamAVGui.Core.Configuration;
 using ClamAVGui.Core.Interfaces;
 using ClamAVGui.Core.Models;
 using ClamAVGui.Platform.Interfaces;
@@ -59,7 +60,7 @@ public sealed class LinuxPlatformService : IPlatformService
         SupportsFreshClam = true,
         SupportsNativeOnAccess = File.Exists("/usr/sbin/clamonacc") || File.Exists("/usr/bin/clamonacc"),
         SupportsReactiveMonitoring = true,
-        SupportsScheduling = true,
+        SupportsScheduling = false,
         SupportsNotifications = true,
         SupportsTray = true,
         SupportsStartupRegistration = true
@@ -143,8 +144,7 @@ public sealed class LinuxClamAvBinaryLocator : IClamAvBinaryLocator
                         (Directory.Exists("/etc/clamd.d") ? "/etc/clamd.d" :
                         (Directory.Exists("/usr/local/etc") ? "/usr/local/etc" : null));
 
-        var dbDir = Directory.Exists("/var/lib/clamav") ? "/var/lib/clamav" :
-                    (Directory.Exists("/var/clamav") ? "/var/clamav" : null);
+        var dbDir = FindDatabaseDirectory(clamscan);
 
         var logDir = Directory.Exists("/var/log/clamav") ? "/var/log/clamav" : null;
 
@@ -163,6 +163,21 @@ public sealed class LinuxClamAvBinaryLocator : IClamAvBinaryLocator
             Version = "Linux Native",
             Source = customPath != null ? ClamAvInstallationSource.Custom : ClamAvInstallationSource.System
         });
+    }
+
+    private static string? FindDatabaseDirectory(string scanner)
+    {
+        var prefix = Path.GetDirectoryName(Path.GetDirectoryName(scanner));
+        var candidates = new List<string>();
+        if (prefix != null && prefix != "/usr")
+        {
+            candidates.Add(Path.Combine(prefix, "share", "clamav"));
+        }
+        candidates.AddRange(new[] { "/var/lib/clamav", "/var/clamav", "/usr/local/share/clamav", "/usr/share/clamav" });
+
+        var directories = candidates.Distinct().Select(path => (Path: path, Status: ClamAvDatabase.Inspect(path))).ToArray();
+        return directories.FirstOrDefault(entry => entry.Status == DatabaseStatus.Available).Path
+            ?? directories.FirstOrDefault(entry => entry.Status is DatabaseStatus.Empty or DatabaseStatus.Unreadable).Path;
     }
 
     private static string? CheckFile(string dir, string name)
@@ -237,11 +252,11 @@ public sealed class LinuxSchedulerService : ISchedulerService
 
     public Task<string> CreateOrUpdateDailyScanTaskAsync(string targetPath, TimeSpan timeOfDay, CancellationToken cancellationToken = default)
     {
-        return Task.FromResult($"Scheduled scan configured for {timeOfDay.Hours:00}:{timeOfDay.Minutes:00}");
+        return Task.FromResult("Scheduled scans are unavailable on this platform.");
     }
 
     public Task<string> RemoveDailyScanTaskAsync(CancellationToken cancellationToken = default)
     {
-        return Task.FromResult("Scheduled scan removed.");
+        return Task.FromResult("Scheduled scans are unavailable on this platform.");
     }
 }
